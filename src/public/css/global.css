@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Roboto, sans-serif;
+  display: flex;
+  height: 100vh;
+  min-width: 1024px;
+}
+
+:root {
+  --color-white: #fff;
+  --color-gray: #cac4c9;
+  --color-brown: #4d394b;
+  --color-dark-brown: #3e313c;
+  --color-green: #4f9689;
+  --header-height: 54px;
+  --margin-s: 4px;
+  --margin-m: 8px;
+  --margin-l: 12px;
+  --font-size-s: 16px;
+  --font-size-m: 20px;
+  --font-size-l: 24px;
+}

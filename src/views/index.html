@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flack</title>
+    <link rel="stylesheet" type="text/css" media="screen" href="/main.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <h1 class="sidebar__header">Flack</h1>
+      <h2 class="sidebar__channels">
+        <label class="sidebar__channels-text" for="channels">Channels</label>
+        <button
+          type="button"
+          id="channels"
+          data-js="channels"
+          class="sidebar__plus-button"
+        ></button>
+      </h2>
+      <ul data-js="channels-list" class="sidebar__list"></ul>
+      <h2 class="sidebar__direct-messages">
+        <label class="sidebar__direct-messages-text" for="direct-message"
+          >Direct Messages</label
+        >
+        <button
+          data-js="direct-messages"
+          id="direct-message"
+          class="sidebar__plus-button"
+        ></button>
+      </h2>
+      <ul data-js="direct-messages-list" class="sidebar__list"></ul>
+    </aside>
+    <main class="content">
+      <header class="header"></header>
+      <div class="content__chat-container">
+        <div class="chat">
+          <div class="chat__text"></div>
+          <div class="chat__input"></div>
+        </div>
+        <aside class="action-bar"></aside>
+      </div>
+    </main>
+  </body>
+</html>
