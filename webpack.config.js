@@ -1,20 +1,50 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   entry: path.join(__dirname, "src", "public", "components", "main.js"),
   output: {
     path: path.join(__dirname, "dist"),
     publicPath: "/",
-    filename: "bundle.js", // Fixed the typo here
+    filename: "bundle.js",
   },
-  mode: "production", // Set mode to production for optimization
+  mode: "production", // Optimization for production builds
+  module: {
+    rules: [
+      {
+        test: /\.css$/i, // Match CSS files
+        use: [MiniCssExtractPlugin.loader, "css-loader"], // Extract CSS and process it
+      },
+    ],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "src", "views", "index.html"),
     }),
+    new MiniCssExtractPlugin({
+      filename: "main.css", // Output CSS file
+    }),
   ],
 };
+
+// const path = require("path");
+// const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+// module.exports = {
+//   entry: path.join(__dirname, "src", "public", "components", "main.js"),
+//   output: {
+//     path: path.join(__dirname, "dist"),
+//     publicPath: "/",
+//     filename: "bundle.js", // Fixed the typo here
+//   },
+//   mode: "production", // Set mode to production for optimization
+//   plugins: [
+//     new HtmlWebpackPlugin({
+//       template: path.join(__dirname, "src", "views", "index.html"),
+//     }),
+//   ],
+// };
 
 /*
      -----------------------------------------------

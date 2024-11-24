@@ -8,7 +8,7 @@
     "server:watch": "npx nodemon ./server.js",
     "css:build": "npx postcss ./src/public/css/main.css -o ./dist/main.css",
     "css:watch": "npx postcss --watch ./src/public/css/main.css -o ./dist/main.css",
-    "webpack:release": "npx webpack",
+    "webpack:release": "npm run css:build && npx webpack",
     "images:copy": "cp -r ./src/public/images ./dist/images",
     "webpack:watch": "npx webpack -watch"
   },
@@ -18,8 +18,10 @@
     "express": "^4.21.1"
   },
   "devDependencies": {
+    "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.3",
     "jest": "^29.7.0",
+    "mini-css-extract-plugin": "^2.9.2",
     "nodemon": "^3.1.7",
     "postcss": "^8.4.49",
     "postcss-cli": "^11.0.0",

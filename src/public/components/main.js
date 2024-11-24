@@ -1,4 +1,5 @@
 require("./sidebar");
+require("./header");
 
 /*
 Summary
