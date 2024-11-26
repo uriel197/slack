@@ -26,7 +26,7 @@ class Store {
   //     this.reducers[name] = reducer;
   //   }
   dispatch = (action) => {
-    // Dispatch is like raising your hand to announce something important.
+    // Dispatch is like raising your hand to announce something important happened.
     let newState = {};
     //reducerName: Name of the reducer (e.g., "chat").
     //reducer: The actual reducer function (e.g., chatReducer()).

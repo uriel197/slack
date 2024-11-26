@@ -12,7 +12,9 @@ body {
 }
 
 :root {
+  --color-blue: #0c5f97;
   --color-white: #fff;
+  --color-light-gray: #eee;
   --color-gray: #cac4c9;
   --color-brown: #4d394b;
   --color-dark-brown: #3e313c;
