@@ -21,7 +21,7 @@ class Component {
 
   setChild = (name, child) => {
     this.children[name] = createElement(child);
-    console.log(this.children);
+    // console.log(this.children);
   };
 }
 

@@ -1,21 +1,59 @@
 const Component = require("../component");
 const ChatMenu = require("./ChatMenu");
+
+// Socket.io Client Setup:
+const socketIO = require("socket.io-client");
+const socket = socketIO();
+const LINE_HEIGHT_IN_PIXELS = 14;
+const TEXT_AREA_MAX_HEIGHT = 200;
+const RETURN_KEY = 13;
+const BACKSPACE_KEY = 8;
+
 class Chat extends Component {
   constructor(props) {
     /* 1 */
     super(props); // Calls the parent Component constructor
-    this.setSubscriber("chat", this.onEvent);
+    // this.setSubscriber("chat", this.onEvent);
   }
+  postMessage = (event) => {
+    event.preventDefault();
+    if (event.keyCode === RETURN_KEY && !event.shiftKey) {
+      const message = event.target.value;
+      event.target.value = "";
+      // client-to-server event.
+      socket.emit("message", message);
+      // message height is reset
+      document.body.style.setProperty("--message-height", 0); /* 4 */
+      // The explicit check for !event.shiftKey in the first case ensures that the message is only sent if Enter is pressed without Shift.
+    } else if (event.keyCode === RETURN_KEY) {
+      const heightString =
+        document.body.style.getPropertyValue("--message-height");
+      const height = parseInt(heightString || 0);
+      const newHeight = Math.min(
+        TEXT_AREA_MAX_HEIGHT,
+        height + LINE_HEIGHT_IN_PIXELS
+      );
+      document.body.style.setProperty("--message-height", newHeight);
+      // If the user pcontainerresses Backspace with an empty input, the height resets to zero
+    } else if (
+      event.keyCode === BACKSPACE_KEY &&
+      event.target.value.length < 1
+    ) {
+      document.body.style.setProperty("--message-height", 0);
+    }
+  };
+
   openThreadAction = (event, postKey) => {
     event.preventDefault();
     alert(postKey);
   };
+
   openMoreActions = (event, postKey) => {
     event.preventDefault();
     alert(postKey);
   };
+
   renderPosts = (post, index) => {
-    /* 2 */
     this.setChild(`menu-${index}`, new ChatMenu({ postKey: index }));
     return `
       <li class="chat__li">
@@ -33,15 +71,22 @@ class Chat extends Component {
       </li>
     `;
   };
+
   onEvent = (state, action) => {};
 
   render = () => {
+    /* 3 */
     return `
       <div class="chat__container">
-        <ul>
-          ${this.props.posts.map(this.renderPosts).join("")}
-        </ul>
-        <div class="chat__typing">Someone is typing...</div>
+        <div data-ref="text" class="chat__text-container">
+          <ul>
+            ${this.props.posts.map(this.renderPosts).join("")}
+          </ul>
+          <div class="chat__typing">Someone is typing...</div>
+        </div> 
+        <div class="chat__input-container">
+          <textarea onkeyup="chat.postMessage(event)" class="chat__input" placeholder="Message"></textarea>
+        </div>
       </div>
     `;
   };
@@ -91,5 +136,14 @@ The ChatMenu component is initialized with a prop postKey (set to index), which 
 Menu Placeholder:
 <template data-child="menu-${index}"></template>: A placeholder for the ChatMenu component.
 This is where the child component (ChatMenu) will be dynamically inserted by the createElement utility.
+
+*** 3: onkeyup="chat.postMessage(event)"
+    This is the event listener attached to the textarea. It triggers the postMessage method every time the user types (i.e., the key is released). The method handles the message formatting, height adjustment, and emits the message if Enter is pressed.
+
+***4: document.body.style.setProperty("--message-height", 0);
+    is used to update a CSS custom property called --message-height defined in chat.css.
+    The --message-height custom property is used to control the height of the text input area for the chat.
+    When the user presses Enter (without Shift), this line resets the --message-height variable to 0. This likely means the height of the text area will be reset to its default (possibly no extra space).
+    The value of --message-height might be used in the CSS to dynamically adjust the height of the text input area, or potentially other elements that are dependent on this value.
 
 */

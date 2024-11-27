@@ -37,10 +37,16 @@
       <div class="content__chat-container">
         <div class="chat">
           <div class="chat__text" data-js="chat-text"></div>
-          <div class="chat__input"></div>
         </div>
         <aside class="action-bar"></aside>
       </div>
     </main>
   </body>
 </html>
+
+<!-- =================================
+            COMMENTS - COMMENTS
+    ================================= 
+ The line <div class="chat__input"></div> is being replaced by the <textarea> element inside the render() method of the Chat component. 
+In the component-based architecture we're using, the render() method is essentially "rendering" the HTML content dynamically, and the content from index.html is replaced when createElement(chat) is called to render the Chat component into the DOM.
+    -->
