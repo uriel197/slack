@@ -1,5 +1,7 @@
 const Component = require("../component");
 const ChatMenu = require("./ChatMenu");
+const createElement = require("../../lib/createElement");
+const { OpenActionbar } = require("../actionbar/actionbarActions");
 
 // Socket.io Client Setup:
 const socketIO = require("socket.io-client");
@@ -13,7 +15,7 @@ class Chat extends Component {
   constructor(props) {
     /* 1 */
     super(props); // Calls the parent Component constructor
-    // this.setSubscriber("chat", this.onEvent);
+    this.setSubscriber("chat", this.onEvent);
   }
   postMessage = (event) => {
     event.preventDefault();
@@ -34,7 +36,7 @@ class Chat extends Component {
         height + LINE_HEIGHT_IN_PIXELS
       );
       document.body.style.setProperty("--message-height", newHeight);
-      // If the user pcontainerresses Backspace with an empty input, the height resets to zero
+      // If the user uses Backspace with an empty input, the height resets to zero
     } else if (
       event.keyCode === BACKSPACE_KEY &&
       event.target.value.length < 1
@@ -45,7 +47,9 @@ class Chat extends Component {
 
   openThreadAction = (event, postKey) => {
     event.preventDefault();
-    alert(postKey);
+    const title = "Thread";
+    const data = { title, component: createElement(window.thread) };
+    this.dispatch(OpenActionbar(data));
   };
 
   openMoreActions = (event, postKey) => {
