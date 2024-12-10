@@ -31,13 +31,14 @@ class Store {
     //reducerName: Name of the reducer (e.g., "chat").
     //reducer: The actual reducer function (e.g., chatReducer()).
     for (const [reducerName, reducer] of Object.entries(this.reducers)) {
-      console.log(this.reducers); //{sidebar: ƒ} reducerName = sidebar, reducer = (e,s)=> {…}
+      //console.log(this.reducers); //{sidebar: ƒ, chat: f} reducerName = sidebar, reducer = (e,s)=> {…}
       const currentState = this.state[reducerName];
       // currentState Refers to the state before the current action is processed. It’s specific to a single reducer.
       newState[reducerName] = reducer(currentState, action);
       //newState Refers to the updated state returned by the reducer for the current action.
       this.state[reducerName] = { ...currentState, ...newState[reducerName] };
       // this.state: is the global state object in the Store.
+      console.log("reducers:", this.state[reducerName]);
     }
     for (const subscriber of Object.values(this.subscribers)) {
       subscriber(this.state, action);

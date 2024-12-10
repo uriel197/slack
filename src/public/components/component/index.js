@@ -6,7 +6,7 @@ class Component {
     this.state = {};
     this.props = props;
     this.children = {};
-    this.dispatch = store.dispatch; // No need to bind due to arrow functions
+    this.dispatch = store.dispatch; // Note below
   }
 
   getStoreState = () => store.state;
@@ -93,5 +93,22 @@ When a new message is sent, it tells all chat components to update (subscribers)
 createElement:
 
 Takes the ChatBox's instructions and creates an actual chat box on the screen.
+
+this.dispatch = store.dispatch:
+==============================
+
+Example Flow:
+
+A user clicks a button in a component.
+The component calls its dispatch method:
+
+this.dispatch(OpenActionbar({ title: "New Title", component: someComponent }));
+The dispatch method in Component forwards the action to the Store:
+
+store.dispatch({
+  type: "OPEN_ACTIONBAR",
+  value: { title: "New Title", component: someComponent },
+});
+The Store processes the action, updates the state, and notifies all subscribers.
 
 */

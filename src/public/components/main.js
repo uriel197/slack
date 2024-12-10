@@ -1,7 +1,52 @@
+// THIS WHOLE FILE IS THE FRONTEND DOWNLOADED BY WEBPACK
+const store = require("../lib/store");
+const sidebarReducer = require("./sidebar/sidebarReducer");
+const sidebarInitState = require("./sidebar/initState"); /* {selectedChannel: {
+    name: "",
+    _id: "",
+  },
+  channels: [],
+}; */
+const chatReducer = require("./chat/chatReducer");
+const chatInitState = require("./chat/initState"); /* {typingUsers: {},}; */
+const { SetTypingUser } = require("./chat/chatActions");
+const socketIO = require("socket.io-client");
+const socket = socketIO("http://localhost:3000");
+window.socket = socket;
+
+store.setReducer("sidebar", sidebarReducer, sidebarInitState);
+store.setReducer("chat", chatReducer, chatInitState);
+
+store.dispatch(SetTypingUser({ user: "testUser", isTyping: true }));
+//console.log("Updated state:", store.getState());
+
 require("./sidebar");
 require("./header");
 require("./chat");
 require("./actionbar");
+
+// client-side webSockets
+window.socket.on("connect", () => {
+  console.log("Connected to the server: ", socket.id);
+});
+
+window.socket.on("connect_error", (err) => {
+  console.error("Socket connection error: ", err);
+});
+
+window.socket.on("test-message", (message) => {
+  console.log(message);
+  console.log("--------------------------");
+});
+
+window.socket.on("started-typing", (user) => {
+  console.log("event received:", user);
+  store.dispatch(SetTypingUser({ user, isTyping: true }));
+});
+
+window.socket.on("stopped-typing", (user) => {
+  store.dispatch(SetTypingUser({ user, isTyping: false }));
+});
 
 /*
 Summary

@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 // express
 const express = require("express");
 const app = express();
@@ -11,20 +13,80 @@ const server = http.Server(app);
 // Socket.IO is initialized with the server instance
 const socketIO = require("socket.io");
 const io = socketIO(server);
+// Error modules
+const catchError = require("./lib/utils/catchError");
 
+// Services
+const { channelService, messageService } = require("./lib/services");
+
+// server-side webSockets
 // The server listens for new client connections.
 io.on("connection", (socket) => {
+  console.log("A user connected: ", socket.id);
+
+  // Send a test message to the client after connection
+  socket.emit("test-message", "Hello from the server!");
   /* 1 */
-  //  The server listens for a "message" event sent by a specific connected client.
-  socket.on("message", (message) => {
-    console.log(message);
-    console.log("--------------------------");
+  //  The server listens for a "started-typing" event by a specific connected client.
+  socket.on(
+    "started-typing",
+    (user) => socket.broadcast.emit("started-typing", user)
+    // When a user starts typing, the server broadcasts this event to all other connected clients
+    //console.log("user:", user); // foo0.202123752699526 user is hard coded in Chat.js
+  );
+
+  socket.on("stopped-typing", (user) =>
+    socket.broadcast.emit("stopped-typing", user)
+  );
+
+  socket.on("message", async (message) => {
+    const { userId, channelId, text } = message;
+    // console.log("message:", message); // { userId: 'myId', channelId: '', text: 'lkjh\n' }
+
+    const createdAt = Date.now();
+    const createdMessage = await messageService.createMessage(
+      userId,
+      channelId,
+      createdAt,
+      text
+    );
+    console.log("createdMessage:", createdMessage);
+
+    socket.emit(createdMessage);
+    socket.broadcast.emit(createdMessage);
   });
 });
 
-app.use(express.static(path.join(__dirname, "..", "dist")));
-app.all("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
+app.use(express.json()); //  parses incoming JSON requests.
+app.use(express.static(path.join(__dirname, "..", "dist"))); // note on which files are rendered first in webpack.config.js
+
+// Channel Routes
+app.get(
+  "/api/v1/channels",
+  catchError(async (req, res) => {
+    const channels = await channelService.getChannels();
+    console.log("channels from the start:", channels);
+
+    res.json(channels);
+  })
+);
+
+app.post(
+  "/api/v1/channels",
+  catchError(async (req, res) => {
+    const { name } = req.body;
+    const channel = await channelService.createChannel(name);
+    res.json(channel);
+  })
+);
+app.all(
+  "*",
+  catchError((req, res) => {
+    res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
+  })
+);
+app.use((error, req, res, next) => {
+  res.status(error.statusCode || 500).json({ error: error.message });
 });
 
 module.exports = server;

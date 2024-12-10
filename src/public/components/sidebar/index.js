@@ -4,41 +4,44 @@ const DirectMessagesList = require("./DirectMessagesList");
 const sidebarReducer = require("./sidebarReducer");
 const initState = require("./initState");
 const store = require("../../lib/store");
+const { SetChannels } = require("./sidebarActions");
+const { getChannels, createChannel } = require("../../lib/api/channelsApi");
 
-// querySelector
-const createChannelButton = document.querySelector("[data-js=channels]");
-const createDirectMessageButton = document.querySelector(
-  "[data-js=direct-messages]"
-);
-const channelsList = document.querySelector("[data-js=channels-list]");
-const directMessagesList = document.querySelector(
-  "[data-js=direct-messages-list]"
-);
+(async () => {
+  const createChannelButton = document.querySelector("[data-js=channels]"); // X button
+  const createDirectMessageButton = document.querySelector(
+    "[data-js=direct-messages]"
+  ); // X button
+  const channelsList = document.querySelector("[data-js=channels-list]");
+  const directMessagesList = document.querySelector(
+    "[data-js=direct-messages-list]"
+  );
+  createDirectMessageButton.addEventListener("click", (event) => {
+    alert("Show create direct message modal");
+  });
+  createChannelButton.addEventListener("click", (event) => {
+    alert("Show create channel modal");
+  });
 
-// eventListeners
-createDirectMessageButton.addEventListener("click", (event) => {
-  alert("Show create direct message modal");
-});
-createChannelButton.addEventListener("click", (event) => {
-  alert("Show create channel modal");
-});
+  let channels = await getChannels(); /* 2 */
+  console.log("channels.length:", channels.length); // it will show 0 only if database is empty
 
-// Initialize and Render Components
-const channels = [{ channelName: "general" }, { channelName: "foo" }];
-window.channelsList = new ChannelsList({ channels });
-const channelsNode = createElement(window.channelsList);
-const directMessages = [{ channelName: "general" }, { channelName: "foo" }];
-/* 1 */
-window.directMessagesList = new DirectMessagesList({ directMessages });
-const directMessagesNode = createElement(window.directMessagesList);
-channelsList.parentNode.replaceChild(channelsNode, channelsList);
-directMessagesList.parentNode.replaceChild(
-  directMessagesNode,
-  directMessagesList
-);
-
-// Integrate with store
-store.setReducer("sidebar", sidebarReducer, initState);
+  if (channels.length < 1) {
+    const generalChannel = await createChannel("general");
+    channels = [generalChannel];
+  }
+  store.dispatch(SetChannels(channels));
+  window.channelsList = new ChannelsList();
+  const channelsNode = createElement(window.channelsList);
+  const directMessages = [];
+  window.directMessagesList = new DirectMessagesList({ directMessages });
+  const directMessagesNode = createElement(window.directMessagesList);
+  channelsList.parentNode.replaceChild(channelsNode, channelsList);
+  directMessagesList.parentNode.replaceChild(
+    directMessagesNode,
+    directMessagesList
+  );
+})();
 
 /*
     ===================================
@@ -62,5 +65,69 @@ console.log(window.channelsList); // Access it from anywhere in the app
 Debugging During Development:
 Developers often attach objects to window for easier inspection in the browser's developer console.
 For example, you can directly check or manipulate the state of channelsList in the console.
+
+***2: If the application has already been run at least once, the channel (_id, name, usersInChannel, and __v) has already been created by Mongoose, specifically through the createChannel method defined in ChannelService.js. otherwise:
+
+Frontend createChannel
+the call to 
+"const generalChannel = await createChannel("general");" is refering to the function in channelsApi.js:
+
+const createChannel = async (name) => {
+  const req = Request("POST", { name });
+  const res = await fetch("/api/v1/channels", req);
+  return res.json();
+};
+This function is a client-side utility to send a POST request to the backend API.
+the backend's /api/v1/channels endpoint in app.js with the channel name in the payload receives this request:
+app.post(
+  "/api/v1/channels",
+  catchError(async (req, res) => {
+    const { name } = req.body;
+    const channel = await channelService.createChannel(name);
+    res.json(channel);
+  })
+);
+
+This listens for a POST request and calls the channelService.createChannel function to handle the logic for creating a new channel.
+Backend Service Logic
+
+const createChannel = async (name) => {
+  const newChannel = new Channel({ name });
+  return await newChannel.save();
+};
+The channelService.createChannel Uses the Mongoose schema defined in channelModel to create a new instance of a channel:
+
+const channel = new mongoose.Schema({
+  name: { type: String, required: true },
+  usersInChannel: { type: Array, default: [] },
+});
+Saves it to the MongoDB database via newChannel.save().
+When saved, Mongoose automatically adds fields like _id and __v to the created document. The returned object is sent back to the client as the response.
+
+Backend Response
+
+The backend sends the newly created channel object as JSON:
+
+{
+  "_id": "6758a77857c1af50b945ad8e",
+  "name": "general",
+  "usersInChannel": [],
+  "__v": 0
+}
+
+Frontend Response Handling
+The channels array is then set to include only the generalChannel:
+
+channels = [generalChannel];
+This is equivalent to:
+
+channels = [
+    {
+        "_id": "6758a77857c1af50b945ad8e",
+        "name": "general",
+        "usersInChannel": [],
+        "__v": 0
+    }
+];
 
 */

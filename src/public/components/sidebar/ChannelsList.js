@@ -10,7 +10,7 @@ class ChannelList extends Component {
     /* 1 */
     if (action.type === SET_SELECTED_CHANNEL) {
       const refs = Object.values(this.refs);
-      console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected, foo: li.sidebar__li}
+      console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected}
 
       refs.forEach((ref) => {
         ref.classList.remove("sidebar__li");
@@ -20,31 +20,38 @@ class ChannelList extends Component {
     }
   };
 
+  // Triggered when channel is clicked
   loadChannel = (event, channelName) => {
     event.preventDefault();
-    this.dispatch(SetSelectedChannel(channelName));
+    const channel = this.getStoreState().sidebar.channels.find(
+      (channel) => channel.name === channelName
+    );
+    this.dispatch(SetSelectedChannel(channel));
     this.refs[channelName].classList.add("sidebar__li--selected");
   };
 
-  renderListItem = ({ selected, channelName }, index) => {
+  renderListItem = ({ selected, name }) => {
     const className = selected ? "sidebar__li--selected" : "sidebar__li";
     return `
-      <li data-ref="${channelName}" class="${className}">
-        <a onclick="channelsList.loadChannel(event, '${channelName}')" class="sidebar__link">
-          <span class="sidebar__hash">#</span> ${channelName}
+      <li data-ref="${name}" class="${className}">
+        <a onclick="channelsList.loadChannel(event, '${name}')" class="sidebar__link">
+          <span class="sidebar__hash">#</span> ${name}
         </a>
       </li>
     `;
   };
+
   render = () => {
-    console.log(this.props);
+    // console.log(this.props);
     // channels: Array(2)
     // 0: {channelName: 'general'}
     // 1: {channelName: 'foo'}
 
     return `
       <ul class="sidebar__list">
-        ${this.props.channels.map(this.renderListItem).join("")}
+        ${this.getStoreState()
+          .sidebar.channels.map(this.renderListItem)
+          .join("")}
       </ul>
     `;
   };
