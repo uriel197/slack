@@ -8,17 +8,24 @@ const app = express();
 const path = require("path");
 // We use http.Server to wrap the express app
 const http = require("http");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const server = http.Server(app);
-
 // Socket.IO is initialized with the server instance
 const socketIO = require("socket.io");
 const io = socketIO(server);
 // Error modules
 const catchError = require("./lib/utils/catchError");
+const UserView = require("./lib/services/userService/UserView");
+const config = require("./config");
 
-// Services
-const { channelService, messageService } = require("./lib/services");
-
+const isLoggedIn = require("./lib/utils/isLoggedIn");
+const isLoggedInWithRedirect = require("./lib/utils/isLoggedInWithRedirect");
+const {
+  channelService,
+  messageService,
+  userService,
+} = require("./lib/services");
 // server-side webSockets
 // The server listens for new client connections.
 io.on("connection", (socket) => {
@@ -39,6 +46,8 @@ io.on("connection", (socket) => {
     socket.broadcast.emit("stopped-typing", user)
   );
 
+  socket.on("client-message", (message) => console.log(message));
+
   socket.on("message", async (message) => {
     const { userId, channelId, text } = message;
     // console.log("message:", message); // { userId: 'myId', channelId: '', text: 'lkjh\n' }
@@ -50,41 +59,112 @@ io.on("connection", (socket) => {
       createdAt,
       text
     );
-    console.log("createdMessage:", createdMessage);
+    // console.log("createdMessage:", createdMessage);
 
     socket.emit(createdMessage);
     socket.broadcast.emit(createdMessage);
   });
 });
 
+app.use(
+  /* express-session */
+  session({
+    resave: false,
+    saveUninitialized: true,
+    name: "flack-session",
+    secret: process.env.SECRET || "secret",
+    store: MongoStore.create({
+      mongoUrl: "mongodb://127.0.0.1:27017/local",
+    }),
+  })
+);
+
 app.use(express.json()); //  parses incoming JSON requests.
+app.use(express.urlencoded({ extended: false })); // When there is an HTTP POST request from the client with content type application/x-www-form-urlencoded, this middleware parses the data and populates the req.body object with key-value pairs.
 app.use(express.static(path.join(__dirname, "..", "dist"))); // note on which files are rendered first in webpack.config.js
+
+app.get(
+  "/",
+  isLoggedInWithRedirect,
+  catchError((req, res) => {
+    res.sendFile(path.join(__dirname, "..", "dist", "main.html"));
+  })
+);
+
+app.get(
+  "/register",
+  catchError(async (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "register.html"));
+  })
+);
+
+app.get(
+  "/login",
+  catchError(async (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "login.html"));
+  })
+);
+
+app.get(
+  "/logout",
+  catchError(async (req, res) => {
+    req.session.destroy();
+    res.redirect("/login");
+  })
+);
+
+app.post(
+  "/register",
+  catchError(async (req, res) => {
+    const { username, password } = req.body;
+    const user = await userService.registerUser(username, password);
+    req.session.userId = user.id;
+    res.redirect("/");
+  })
+);
+
+app.post(
+  "/login",
+  catchError(async (req, res) => {
+    const { username, password } = req.body;
+    const user = await userService.loginUser(username, password);
+    req.session.userId = user.id; /* "id" or "_id" */
+    res.redirect("/");
+  })
+);
+
+app.get(
+  "/api/v1/logged-in",
+  catchError(async (req, res) => {
+    const user = await userService.getUser(req.session.userId);
+    res.json(UserView(user));
+  })
+);
 
 // Channel Routes
 app.get(
   "/api/v1/channels",
+  isLoggedIn,
   catchError(async (req, res) => {
     const channels = await channelService.getChannels();
-    console.log("channels from the start:", channels);
-
     res.json(channels);
   })
 );
 
 app.post(
   "/api/v1/channels",
+  isLoggedIn, // if loggedIn it will return next()
   catchError(async (req, res) => {
     const { name } = req.body;
     const channel = await channelService.createChannel(name);
     res.json(channel);
   })
 );
-app.all(
-  "*",
-  catchError((req, res) => {
-    res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
-  })
-);
+
+app.use((req, res, next) => {
+  res.status(404).end("404 not found");
+});
+
 app.use((error, req, res, next) => {
   res.status(error.statusCode || 500).json({ error: error.message });
 });
@@ -167,4 +247,36 @@ Key Point: This is also a listener, specifically for events sent by the client.
     Server to Client: socket.emit("eventName", data)
     Client to Server: socket.emit("eventName", data)
     emit is the action, while on listens for that action.
+
+*** express-session?
+express-session is a middleware for Express.js that enables session management. It allows you to store and retrieve user-specific data across multiple requests, making it useful for features like authentication, user preferences, or maintaining a shopping cart in web applications.
+
+Key Features
+Session Creation and Management: Automatically creates and manages sessions for incoming requests.
+Storage: Stores session data in memory by default but supports external storage systems like databases or caching layers (e.g., Redis, MongoDB).
+Cookie-based Session ID: Uses a cookie to store the session ID on the client side while keeping session data on the server.
+Customizable: Highly configurable, allowing you to define how sessions are stored, expired, and secured.
+How It Works:
+A session ID is generated and sent to the client in a cookie (default: connect.sid).
+The server uses this session ID to retrieve and manage session data for that specific user.
+Session data is stored on the server, either in memory (default) or in a session store like Redis, MongoDB, etc.
+
+connect-mongo
+=============
+
+By default, session data is stored in memory, which is not ideal for production. To persist sessions, you can use external session stores like:
+MongoDB: Scalable database for session storage.
+
+*** "id" or "_id"
+    ============
+
+    Mongoose User Model Behavior
+In Mongoose, a document usually has an _id field by default, which represents the unique identifier for that document in the database. This field is typically an ObjectId.
+
+user._id: This is the actual MongoDB ObjectId assigned to the document.
+user.id: Mongoose provides a virtual getter for the _id field, returning it as a string. So, user.id is essentially user._id.toString().
+Your Scenario
+If user is an instance of a Mongoose model, user.id will already give you the string representation of the _id field.
+If your app logic relies on string comparisons (e.g., comparing session data to other strings), using user.id is often preferable because it avoids the need to manually convert ObjectId to a string.
+
 */

@@ -20,7 +20,8 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, "src", "views", "index.html"),
+      template: path.join(__dirname, "src", "views", "main.html"),
+      filename: "main.html",
     }),
     new MiniCssExtractPlugin({
       filename: "main.css", // Output CSS file

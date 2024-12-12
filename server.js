@@ -1,8 +1,9 @@
 const app = require("./src/app");
 const mongoose = require("mongoose");
+const config = require("./src/config");
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/local")
+  .connect(config.url)
   .then(() => {
     console.log("Connected to MongoDB successfully!");
     const PORT = process.env.PORT || 3000;
@@ -12,7 +13,7 @@ mongoose
   })
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error.message);
-    process.exit(1);
+    // process.exit(1);
   });
 
 // Handle unhandled promise rejections
