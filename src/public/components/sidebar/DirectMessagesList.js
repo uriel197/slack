@@ -6,6 +6,7 @@ class DirectMessagesList extends Component {
     super(props);
     this.setSubscriber("directMessagesList", this.onEvent);
   }
+
   onEvent = (state, action) => {
     if (action.type === SET_SELECTED_CHANNEL) {
       const refs = Object.values(this.refs);
@@ -16,15 +17,21 @@ class DirectMessagesList extends Component {
       });
     }
   };
+
   removeChannel = (event, channelName) => {
     event.preventDefault();
     alert(`Remove ${channelName}`);
   };
+
   loadDirectMessages = (event, channelName) => {
     event.preventDefault();
-    this.dispatch(SetSelectedChannel(channelName));
+    const channel = this.getStoreState().sidebar.channels.find(
+      (channel) => channel.name === channelName
+    );
+    this.dispatch(SetSelectedChannel(channel));
     this.refs[channelName].classList.add("sidebar__li--selected");
   };
+
   renderListItem = ({ selected, channelName }) => {
     return `
       <li data-ref="${channelName}" class="sidebar__li">
@@ -38,6 +45,7 @@ class DirectMessagesList extends Component {
       </li>
     `;
   };
+
   render() {
     return `
       <ul class="sidebar__list">
@@ -46,4 +54,5 @@ class DirectMessagesList extends Component {
     `;
   }
 }
+
 module.exports = DirectMessagesList;

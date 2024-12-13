@@ -1,0 +1,93 @@
+    HOW CLIENT INTERACTS WITH BACKEND
+    =================================
+
+The following code demonstrates how the client interacts with the backend API to fetch or create a "general" channel dynamically whether channels exist or not. Here's the flow broken down step by step:
+
+Client side
+===========
+
+Calling getChannels()
+let channels = await getChannels();
+Purpose: Fetches the list of existing channels from the server using the Request() and getChannels() functions from the api folder to send the fetch request to the /api/v1/channels endpoint with the generated configuration.
+Server Parses and returns the response as JSON.
+
+Outcome:
+channels will either contain the array of channels retrieved from the server or return an empty array.
+
+Check if channels is Empty
+==========================
+if (channels.length < 1) { ... }
+Purpose: Determines whether any channels exist.
+Condition: If channels has a length less than 1 (empty array), the block inside the if statement executes.
+
+Creating the General Channel
+============================
+const generalChannel = await createChannel("general");
+channels = [generalChannel];
+
+Purpose: Creates a "general" channel by calling the POST /api/v1/channels endpoint with the channel name "general".
+
+Implementation:
+Invokes the Request function with method set to "POST".
+data set to { name: "general" }.
+Sends the fetch request to the server with the generated configuration.
+Server Parses and returns the newly created channel object as JSON.
+
+Outcome:
+generalChannel will contain the newly created channel 
+
+Storing the Result in generalChannel
+====================================
+After the API call completes, the returned JSON object (representing the channel) is stored in the generalChannel variable on the frontend:
+
+const generalChannel = await createChannel("general");
+At this point:
+
+generalChannel = {
+    "_id": "6758a77857c1af50b945ad8e",
+    "name": "general",
+    "usersInChannel": [],
+    "__v": 0
+};
+Assigning channels
+
+The channels array is then set to include only the generalChannel:
+
+channels = [generalChannel];
+This is equivalent to:
+
+channels = [
+    {
+        "_id": "6758a77857c1af50b945ad8e",
+        "name": "general",
+        "usersInChannel": [],
+        "__v": 0
+    }
+];
+
+Post-Flow
+=========
+At the end of the block, the channels variable will either:
+Contain the array of channels fetched from the server, or
+Contain a single channel, the newly created "general" channel, if the original list was empty.
+
+Server-side code in App.js
+==========================
+
+app.get(
+  "/api/v1/channels",
+  catchError(async (req, res) => {
+    const channels = await channelService.getChannels();
+    res.json(channels);
+  })
+);
+
+app.post(
+  "/api/v1/channels",
+  catchError(async (req, res) => {
+    const { name } = req.body;
+    const channel = await channelService.createChannel(name);
+    res.json(channel);
+  })
+);
+

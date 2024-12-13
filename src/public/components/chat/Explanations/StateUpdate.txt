@@ -1,0 +1,66 @@
+    ORDER FLOW FOR UPDATING STORE AND COMPONENTS STATE
+    ==================================================
+
+The order flow for updating state, for example, SetTypingUser involves multiple stages, starting with user interaction and ending with the state update and UI rendering. Here's the detailed flow:
+
+***1. User Starts Typing
+Frontend (Chat.js):
+When the user starts typing in the chat input box, this code runs:
+
+if (event.target.value.length > 0) {
+  window.socket.emit("started-typing", user);
+}
+Action: The user (e.g., "foo0.12345") is sent to the server via socket.emit.
+
+***2. Server Receives and Broadcasts the Event
+Server (Node.js):
+The server listens for the started-typing event:
+
+socket.on("started-typing", (user) => {
+  socket.broadcast.emit("started-typing", user);
+});
+Action: The server broadcasts the event (using socket.broadcast.emit) to all connected clients except the sender.
+
+***3. Frontend Receives the Broadcast
+Frontend (main.js):
+The client receives the started-typing event via the socket connection:
+
+window.socket.on("started-typing", (user) => {
+  store.dispatch(SetTypingUser({ user, isTyping: true }));
+});
+Action: The SetTypingUser action is dispatched to the store.
+
+***4. Store Updates State
+Reducer (ChatReducer.js):
+The SetTypingUser action is handled by the reducer:
+
+switch (action.type) {
+  case SET_TYPING_USER:
+    const typingUsers = Object.assign({}, state.typingUsers, {
+      [action.value.user]: action.value.isTyping,
+    });
+    return { ...state, typingUsers };
+}
+Action: The typingUsers object in the Redux store is updated.
+The key is the user string (e.g., "foo0.12345").
+The value is true for typing, and will eventually be set to false when the user stops typing.
+
+***5. State Change Triggers UI Update
+Chat Component (Chat.js):
+A store.subscribe listener is triggered by the state change.
+The onEvent function handles the state update:
+
+onEvent = (state, action) => {
+  if (action.type === SET_TYPING_USER) {
+    const users = Object.keys(state.chat.typingUsers);
+    const typingUsers = users.filter((user) => !!state.chat.typingUsers[user]);
+    if (typingUsers.length > 1) {
+      this.refs.typing.textContent = "Several people are typing...";
+    } else if (typingUsers.length === 1) {
+      this.refs.typing.textContent = `${typingUsers[0]} is typing...`;
+    } else {
+      this.refs.typing.textContent = "";
+    }
+  }
+};
+Action: The this.refs.typing element is updated to display the appropriate typing message.

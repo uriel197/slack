@@ -1,15 +1,14 @@
 const Component = require("../component");
 const ChatMenu = require("./ChatMenu");
 const createElement = require("../../lib/createElement");
+const { SET_TYPING_USER } = require("./chatEvents");
 const { OpenActionbar } = require("../actionbar/actionbarActions");
 
-// Socket.io Client Setup:
-const socketIO = require("socket.io-client");
-const socket = socketIO();
+// styles variables
 const LINE_HEIGHT_IN_PIXELS = 14;
 const TEXT_AREA_MAX_HEIGHT = 200;
 const RETURN_KEY = 13;
-const BACKSPACE_KEY = 8;
+const user = "foo" + Math.random();
 
 class Chat extends Component {
   constructor(props) {
@@ -17,32 +16,43 @@ class Chat extends Component {
     super(props); // Calls the parent Component constructor
     this.setSubscriber("chat", this.onEvent);
   }
+
   postMessage = (event) => {
     event.preventDefault();
     if (event.keyCode === RETURN_KEY && !event.shiftKey) {
-      const message = event.target.value;
-      event.target.value = "";
-      // client-to-server event.
-      socket.emit("message", message);
-      // message height is reset
-      document.body.style.setProperty("--message-height", 0); /* 4 */
       // The explicit check for !event.shiftKey in the first case ensures that the message is only sent if Enter is pressed without Shift.
+      this._sendMessage(event);
     } else if (event.keyCode === RETURN_KEY) {
-      const heightString =
-        document.body.style.getPropertyValue("--message-height");
-      const height = parseInt(heightString || 0);
-      const newHeight = Math.min(
-        TEXT_AREA_MAX_HEIGHT,
-        height + LINE_HEIGHT_IN_PIXELS
-      );
-      document.body.style.setProperty("--message-height", newHeight);
-      // If the user uses Backspace with an empty input, the height resets to zero
-    } else if (
-      event.keyCode === BACKSPACE_KEY &&
-      event.target.value.length < 1
-    ) {
-      document.body.style.setProperty("--message-height", 0);
+      this._createNewRow();
     }
+    if (event.target.value.length < 1) {
+      document.body.style.setProperty("--message-height", 0);
+      window.socket.emit("stopped-typing", user);
+    } else if (event.target.value.length > 0) {
+      window.socket.emit("started-typing", user);
+    }
+  };
+
+  _createNewRow = () => {
+    const heightString =
+      document.body.style.getPropertyValue("--message-height");
+    const height = parseInt(heightString || 0);
+    const newHeight = Math.min(
+      TEXT_AREA_MAX_HEIGHT,
+      height + LINE_HEIGHT_IN_PIXELS
+    );
+    document.body.style.setProperty("--message-height", newHeight);
+  };
+
+  _sendMessage = (event) => {
+    const message = {
+      userId: "myId",
+      channelId: this.getStoreState().sidebar.selectedChannel._id,
+      text: event.target.value,
+    };
+    socket.emit("message", message);
+    event.target.value = "";
+    document.body.style.setProperty("--message-height", 0);
   };
 
   openThreadAction = (event, postKey) => {
@@ -76,7 +86,21 @@ class Chat extends Component {
     `;
   };
 
-  onEvent = (state, action) => {};
+  onEvent = (state, action) => {
+    if (action.type === SET_TYPING_USER) {
+      const users = Object.keys(state.chat.typingUsers);
+      const typingUsers = users.filter(
+        (user) => !!state.chat.typingUsers[user]
+      ); /* 4 */
+      if (typingUsers.length > 1) {
+        this.refs.typing.textContent = "Several people are typing...";
+      } else if (typingUsers.length === 1) {
+        this.refs.typing.textContent = `${typingUsers[0]} is typing...`;
+      } else {
+        this.refs.typing.textContent = "";
+      }
+    }
+  };
 
   render = () => {
     /* 3 */
@@ -86,7 +110,7 @@ class Chat extends Component {
           <ul>
             ${this.props.posts.map(this.renderPosts).join("")}
           </ul>
-          <div class="chat__typing">Someone is typing...</div>
+          <div data-ref="typing" class="chat__typing">Someone is typing...</div>
         </div> 
         <div class="chat__input-container">
           <textarea onkeyup="chat.postMessage(event)" class="chat__input" placeholder="Message"></textarea>
@@ -144,10 +168,25 @@ This is where the child component (ChatMenu) will be dynamically inserted by the
 *** 3: onkeyup="chat.postMessage(event)"
     This is the event listener attached to the textarea. It triggers the postMessage method every time the user types (i.e., the key is released). The method handles the message formatting, height adjustment, and emits the message if Enter is pressed.
 
-***4: document.body.style.setProperty("--message-height", 0);
-    is used to update a CSS custom property called --message-height defined in chat.css.
-    The --message-height custom property is used to control the height of the text input area for the chat.
-    When the user presses Enter (without Shift), this line resets the --message-height variable to 0. This likely means the height of the text area will be reset to its default (possibly no extra space).
-    The value of --message-height might be used in the CSS to dynamically adjust the height of the text input area, or potentially other elements that are dependent on this value.
+    *** 4: The double exclamation marks (!!) are used in JavaScript to convert a value into its boolean equivalent. Here's what it does step-by-step:
+
+First Exclamation Mark (!): Converts the value into its opposite boolean form.
+
+Truthy values become false.
+Falsy values become true.
+Second Exclamation Mark (!!): Negates the result of the first !, effectively converting the value back into a boolean.
+
+Ensures that the result is strictly true or false.
+Why Use !! in the Code?
+
+const typingUsers = users.filter(user => !!state.chat.typingUsers[user]);
+In this case:
+
+state.chat.typingUsers[user]:
+This accesses the typingUsers object to check if the current user is typing.
+The value could be undefined, null, or another falsy value if the user isn't typing.
+!!state.chat.typingUsers[user]:
+Ensures that the value is converted into true or false, regardless of its original type.
+
 
 */

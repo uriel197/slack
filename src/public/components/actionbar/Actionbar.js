@@ -99,4 +99,45 @@ that space is a node and that is the content.firstChild which is replaced in the
         This is a thread
     </div>
 this.refs.content.replaceChild(action.value.component, child);
+
+Explanation of initial in CSS:
+==============================
+
+The "initial" keyword sets a CSS property to its default value as per the CSS specification.
+In the Context of display:
+
+When you use display: initial;, the browser resets the display property to its default value for the type of element.
+For example:
+<div> elements have a default display of block.
+<span> elements have a default display of inline.
+Why Use initial?
+
+It’s useful when you want to reset a property without knowing its default value or overriding styles defined elsewhere.
+
+this.refs.actionbar.style.display = "initial";
+sets the display property of the actionbar element back to its default (probably block since <aside> elements are block-level elements by default).
+
+This ensures that the actionbar becomes visible (as long as no other CSS rule explicitly hides it, like display: none;).
+
+But wait! you say that this works as long as no other CSS rule explicitly hides it, like display: none, but here is the css for actionbar:
+.actionbar {
+  display: none;
+}
+
+If the .actionbar element has a display: none rule defined in its CSS, setting this.refs.actionbar.style.display = "initial"; will not override this rule unless the inline style takes precedence. Here’s how this works in detail:
+
+CSS Specificity and Precedence
+Default State in CSS:
+
+.actionbar starts with display: none; from your CSS, which hides it.
+Inline Styles Take Precedence:
+
+When you set this.refs.actionbar.style.display = "initial";, it adds an inline style to the element, like this:
+
+<aside class="actionbar" style="display: initial;"></aside>
+Inline styles have higher specificity than styles in a CSS file, so the browser applies display: initial.
+Effect of initial:
+
+The initial keyword resets the property to the browser's default for the element:
+For <aside>, the default is block.
 */

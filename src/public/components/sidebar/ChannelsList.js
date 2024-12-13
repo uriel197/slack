@@ -20,18 +20,22 @@ class ChannelList extends Component {
     }
   };
 
+  // on clicking the channel
   loadChannel = (event, channelName) => {
     event.preventDefault();
-    this.dispatch(SetSelectedChannel(channelName));
+    const channel = this.getStoreState().sidebar.channels.find(
+      (channel) => channel.name === channelName
+    );
+    this.dispatch(SetSelectedChannel(channel));
     this.refs[channelName].classList.add("sidebar__li--selected");
   };
 
-  renderListItem = ({ selected, channelName }, index) => {
+  renderListItem = ({ selected, name }) => {
     const className = selected ? "sidebar__li--selected" : "sidebar__li";
     return `
-      <li data-ref="${channelName}" class="${className}">
-        <a onclick="channelsList.loadChannel(event, '${channelName}')" class="sidebar__link">
-          <span class="sidebar__hash">#</span> ${channelName}
+      <li data-ref="${name}" class="${className}">
+        <a onclick="channelsList.loadChannel(event, '${name}')" class="sidebar__link">
+          <span class="sidebar__hash">#</span> ${name}
         </a>
       </li>
     `;
@@ -44,11 +48,14 @@ class ChannelList extends Component {
 
     return `
       <ul class="sidebar__list">
-        ${this.props.channels.map(this.renderListItem).join("")}
+         ${this.getStoreState()
+           .sidebar.channels.map(this.renderListItem)
+           .join("")}
       </ul>
     `;
   };
 }
+
 module.exports = ChannelList;
 
 /*
