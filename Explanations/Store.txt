@@ -1,0 +1,269 @@
+
+    ======================================
+        STATE - ACTION - SUBSCRIBER
+    ======================================
+
+1. State
+Think of state as the "memory" of your app.
+It’s like a notebook where the app writes down important things it needs to remember.
+For example:
+In a chat app, the state might include:
+A list of all the messages.
+The name of the user who is logged in.
+Whether the sidebar is open or closed.
+
+2. Action
+An action is like a message you send to the app to say, "Hey, something happened!"
+It tells the app what to do, like:
+"Add this new message to the chat."
+"Change the user’s name."
+"Close the sidebar."
+An action is just an object that describes:
+What happened? (e.g., "NEW_MESSAGE")
+Extra information (e.g., "content": "Hello, world!").
+Example of an action:
+
+{
+  type: "NEW_MESSAGE",
+  content: "Hello, world!"
+}
+
+3. Reducers
+A reducer is like a recipe or a set of rules.
+It looks at the current state (the notebook) and the action (the message) and decides:
+How should the state change?
+Example:
+Current state: The notebook says we have 5 messages.
+Action: "Add a new message: 'Hello, world!'"
+Reducer rule: "Add the new message to the list."
+Result: The notebook now shows 6 messages.
+4. Current State
+The current state is just the app’s latest memory.
+It’s like opening the notebook and saying, "Okay, what do we already have written here?"
+5. Subscriber
+A subscriber is like a person listening for changes.
+
+When the state changes, the subscriber gets notified and can do something about it.
+
+Example:
+
+In a chat app:
+A subscriber might listen for new messages.
+When the state updates (a new message is added), the subscriber updates the chat screen to show the new message.
+Putting It All Together
+Imagine you’re running a pizza shop:
+
+State: Your notebook where you keep track of orders. (e.g., "Order #1: Pepperoni pizza, Order #2: Cheese pizza").
+Action: A message like "Add a new order" or "Cancel an order."
+Reducer: The rules for what happens when an action comes in:
+If someone says "Add an order," you write the order in the notebook.
+If someone says "Cancel an order," you erase it from the notebook.
+Current State: What’s currently written in the notebook.
+Subscriber: The chef, who is waiting for new orders. Every time the notebook changes, the chef gets to work!
+
+
+How "this" Works in Regular Functions:
+=====================================
+
+In regular functions, the value of this depends on how the function is called, not where it's written.
+
+Examples:
+Called as a method of an object:
+
+const obj = {
+  name: "My Object",
+  logName: function () {
+    console.log(this.name); // "this" refers to `obj`
+  },
+};
+
+obj.logName(); // Output: "My Object"
+
+Called as a standalone function:
+
+const obj = {
+  name: "My Object",
+  logName: function () {
+    console.log(this.name);
+  },
+};
+
+const standalone = obj.logName;
+standalone(); // Output: `undefined` or error in strict mode (default `this` is `undefined`)
+
+In an event handler:
+
+const button = document.querySelector("button");
+button.addEventListener("click", function () {
+  console.log(this); // "this" refers to the button element
+});
+
+How "this" Works in Arrow Functions:
+===================================
+
+In arrow functions, this is not dynamically bound. Instead:
+Arrow functions capture the this value from their surrounding scope (lexical this).
+They do not have their own this.
+Examples:
+Inside a method:
+
+const obj = {
+  name: "My Object",
+  logName: () => {
+    console.log(this.name); // "this" refers to the surrounding scope, likely `window` or `undefined`
+  },
+};
+
+obj.logName(); // Output: `undefined` (or `window.name` if globally defined)
+In an event handler:
+
+const button = document.querySelector("button");
+button.addEventListener("click", () => {
+  console.log(this); // "this" refers to the surrounding scope, not the button element
+});
+In this case, this would likely refer to the window object, not the button.
+
+When to Use Arrow Functions vs Regular Functions
+Arrow Functions are great for:
+
+Callbacks (e.g., setTimeout, Array.map) where you don’t want this to change.
+Inside a class or method when you need this to refer to the surrounding context.
+Regular Functions are better for:
+
+Object methods where you want this to refer to the object.
+Event handlers where you need this to refer to the event target.
+Examples to Tie It Together
+Regular Function Example:
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+  }
+
+  logName() {
+    console.log(this.name); // "this" refers to the instance of Example
+  }
+}
+
+const instance = new Example();
+instance.logName(); // Output: "Example Object"
+
+Arrow Function Example:
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+  }
+
+  logName = () => {
+    console.log(this.name); // "this" is captured from the surrounding scope (the instance of Example)
+  };
+}
+
+const instance = new Example();
+instance.logName(); // Output: "Example Object"
+
+But:
+in our code the author writes:
+    this.setSubscriber = this.setSubscriber.bind(this);
+   
+  setSubscriber(name, subscriber) {
+    this.subscribers[name] = subscriber;
+  }
+
+if regular functions as methods already bind the "this" to the instance of the class, why does he need to bind it?
+
+Excellent question! You're absolutely right to wonder why binding this is necessary if methods in classes can already access the instance via this. Here's the explanation:
+
+Why Binding Is Needed
+While regular class methods have access to this when called on an instance, the binding to the instance can break in certain cases, particularly when the method is passed as a callback or used independently.
+
+When you pass a method as a callback or assign it to another variable, the connection to the class instance is lost, and this no longer refers to the instance of the class.
+
+Examples of this Losing Context
+1. Passing a Method as a Callback
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+    this.printName = this.printName.bind(this); // Fixes the `this` problem
+  }
+
+  printName() {
+    console.log(this.name); // `this` refers to the instance
+  }
+}
+
+const example = new Example();
+
+// Passing the method as a callback
+setTimeout(example.printName, 1000);
+// Without binding, this would output `undefined`
+// Because `this` inside `printName` would refer to the global context (or `undefined` in strict mode)
+
+2. Storing the Method in a Variable
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+  }
+
+  printName() {
+    console.log(this.name);
+  }
+}
+
+const example = new Example();
+
+// Assigning the method to a variable
+const print = example.printName;
+print(); // Output: `undefined`
+// Here, `this` is not the class instance anymore. It's the global context or `undefined`.
+
+What .bind(this) Does
+The .bind(this) method creates a new version of the function where this is explicitly set to the instance of the class, regardless of how the function is called.
+
+Example of Binding Fixing the Problem:
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+    this.printName = this.printName.bind(this); // `this` will always refer to the instance
+  }
+
+  printName() {
+    console.log(this.name);
+  }
+}
+
+const example = new Example();
+
+// Now, the method works as expected:
+setTimeout(example.printName, 1000); // Output: "Example Object"
+const print = example.printName;
+print(); // Output: "Example Object"
+
+ES6 Arrow Functions Can Solve This Too
+Another way to avoid .bind(this) is to define the method as an arrow function, which captures the surrounding this context:
+
+Arrow Function Example:
+
+class Example {
+  constructor() {
+    this.name = "Example Object";
+  }
+
+  printName = () => {
+    console.log(this.name); // `this` always refers to the class instance
+  };
+}
+
+const example = new Example();
+setTimeout(example.printName, 1000); // Output: "Example Object"
+const print = example.printName;
+print(); // Output: "Example Object"
+Why Does Your Code Use .bind(this)?
+The author likely uses .bind(this) because:
+
+It’s compatible with ES5-style coding (before arrow functions were introduced).
+It ensures this inside the method always refers to the class instance, even if the method is used as a callback or assigned to a variable.

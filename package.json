@@ -15,7 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
     "express": "^4.21.1",
+    "express-session": "^1.18.1",
     "mongoose": "^8.8.4",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"

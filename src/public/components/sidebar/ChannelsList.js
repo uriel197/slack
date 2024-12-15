@@ -10,7 +10,7 @@ class ChannelList extends Component {
     /* 1 */
     if (action.type === SET_SELECTED_CHANNEL) {
       const refs = Object.values(this.refs);
-      console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected, foo: li.sidebar__li}
+      console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected}
 
       refs.forEach((ref) => {
         ref.classList.remove("sidebar__li");

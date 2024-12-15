@@ -3,7 +3,19 @@ const express = require("express");
 const app = express();
 
 const catchError = require("./lib/utils/catchError");
-const { channelService, messageService } = require("./lib/services");
+const UserView = require("./lib/services/userService/UserView");
+const config = require("./config");
+const isLoggedIn = require("./lib/utils/isLoggedIn");
+const isLoggedInWithRedirect = require("./lib/utils/isLoggedInWithRedirect");
+const {
+  channelService,
+  messageService,
+  userService,
+} = require("./lib/services");
+
+// express-session
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 
 // We use http.Server to wrap the express app
 const http = require("http");
@@ -42,11 +54,85 @@ io.on("connection", (socket) => {
   });
 });
 
+app.use(
+  session({
+    secret: process.env.SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: "mongodb://127.0.0.1:27017/local",
+    }),
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 14, // Optional: cookie expiration in milliseconds (14 days here)
+    },
+  })
+);
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: false })); /* 1 */
 app.use(express.static(path.join(__dirname, "..", "dist")));
 
 app.get(
+  "/",
+  isLoggedInWithRedirect,
+  catchError((req, res) => {
+    res.sendFile(path.join(__dirname, "..", "dist", "main.html"));
+  })
+);
+
+app.get(
+  "/register",
+  catchError(async (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "register.html"));
+  })
+);
+
+app.get(
+  "/login",
+  catchError(async (req, res) => {
+    res.sendFile(path.join(__dirname, "views", "login.html"));
+  })
+);
+
+app.get(
+  "/logout",
+  catchError(async (req, res) => {
+    req.session.destroy();
+    res.redirect("/login");
+  })
+);
+
+app.post(
+  "/register",
+  catchError(async (req, res) => {
+    const { username, password } = req.body;
+    const user = await userService.registerUser(username, password);
+    req.session.userId = user.id;
+    res.redirect("/");
+  })
+);
+
+app.post(
+  "/login",
+  catchError(async (req, res) => {
+    const { username, password } = req.body;
+    const user = await userService.loginUser(username, password);
+    req.session.userId = user.id;
+    res.redirect("/");
+  })
+);
+
+app.get(
+  "/api/v1/logged-in",
+  catchError(async (req, res) => {
+    const user = await userService.getUser(req.session.userId);
+    res.json(UserView(user));
+  })
+);
+
+app.get(
   "/api/v1/channels",
+  isLoggedIn,
   catchError(async (req, res) => {
     const channels = await channelService.getChannels();
     res.json(channels);
@@ -55,6 +141,7 @@ app.get(
 
 app.post(
   "/api/v1/channels",
+  isLoggedIn,
   catchError(async (req, res) => {
     const { name } = req.body;
     const channel = await channelService.createChannel(name);
@@ -62,12 +149,9 @@ app.post(
   })
 );
 
-app.all(
-  "*",
-  catchError((req, res) => {
-    res.sendFile(path.join(__dirname, "..", "dist", "index.html"));
-  })
-);
+app.use((req, res, next) => {
+  res.status(404).end("404 not found");
+});
 
 app.use((error, req, res, next) => {
   res.status(error.statusCode || 500).json({ error: error.message });
@@ -79,7 +163,36 @@ module.exports = server;
     ======================================
         COMMENTS - COMMENTS - COMMENTS
     ======================================
-Note on http modules:
+
+*** 1: extended: false
+When extended is set to false, the querystring library is used to parse the URL-encoded data. This means it can only handle simple key-value pairs and does not support nested objects.
+
+Example URL:
+
+http://example.com?name=John&age=30
+Parsed Result:
+
+json
+{
+  "name": "John",
+  "age": "30"
+}
+extended: true
+When extended is set to true, the qs library is used to parse the URL-encoded data. This allows for rich objects and arrays to be encoded into the URL-encoded format, supporting nested objects.
+
+Example URL:
+
+http://example.com?user[name]=John&user[age]=30
+Parsed Result:
+
+json
+{
+  "user": {
+    "name": "John",
+    "age":
+
+ 
+*** Note on http modules:
 http.Server() and http.createServer() are equivalent in functionality, but there is a slight difference in how they're used:
 
 http.createServer()
@@ -133,7 +246,7 @@ Client Receives the Response:
         console.log(data); // "Message received!"
     });
 
-    *** 1: 
+*** 1: 
 * io.on("connection", callback)
     Purpose: Listens for a specific event ("connection") on the io instance.
     This means the server is waiting for a client to connect. When a client establishes a connection, the callback is executed with the socket object representing that connection.

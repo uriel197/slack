@@ -91,7 +91,7 @@ class Chat extends Component {
       const users = Object.keys(state.chat.typingUsers);
       const typingUsers = users.filter(
         (user) => !!state.chat.typingUsers[user]
-      ); /* 4 */
+      ); /* 3 */
       if (typingUsers.length > 1) {
         this.refs.typing.textContent = "Several people are typing...";
       } else if (typingUsers.length === 1) {
@@ -127,48 +127,11 @@ module.exports = Chat;
             COMMENTS - COMMENTS
     ==========================================
 
-***1: How props are Defined
-When you create a new instance of Chat, you pass an object as the props argument. For example when we call it in Chat index.js:
-const chat = new Chat({ posts });
+*** 1: Explanations/Chat.***1
 
-In this case, props.posts contains an array of chat posts.
-Each post in the array is an object with details like username, text, imageUrl, and createdAt.
-then, The map() method is called on this.props.posts to transform each post object into an HTML string by calling this.renderPosts which is the callback passed to the map function.
+*** 2: Explanations/Chat.***2
 
-Joining the HTML Strings:
-map() returns an array of HTML strings.
-.join("") combines them into a single string of HTML without any separators.
-
-<li>Post 1 content...</li><li>Post 2 content...</li>
-
-Final Markup:
-The final HTML combines:
-A <div> container for the chat.
-A <ul> containing all the chat posts.
-A <div> showing a "typing" indicator.
-
-
-***2: Explanation of renderPosts Method
-The renderPosts method in the Chat component is responsible for rendering each post in the chat. Here's a detailed explanation:
-1. Arguments
-post: An object containing information about a specific post (e.g., username, createdAt, text, and imageUrl).
-index: The position of the post in the array of posts.
-
-2. this.setChild
-this.setChild(`menu-${index}`, new ChatMenu({ postKey: index }));
-
-Registers a new child component (an instance of ChatMenu) to the current Chat component.
-The child component is stored in this.children under the key menu-${index}.
-The ChatMenu component is initialized with a prop postKey (set to index), which uniquely identifies the post. The ChatMenu represents a menu (e.g., actions) associated with each chat post. By using setChild, the menu component is properly linked to the chat and can be rendered dynamically.
-
-Menu Placeholder:
-<template data-child="menu-${index}"></template>: A placeholder for the ChatMenu component.
-This is where the child component (ChatMenu) will be dynamically inserted by the createElement utility.
-
-*** 3: onkeyup="chat.postMessage(event)"
-    This is the event listener attached to the textarea. It triggers the postMessage method every time the user types (i.e., the key is released). The method handles the message formatting, height adjustment, and emits the message if Enter is pressed.
-
-    *** 4: The double exclamation marks (!!) are used in JavaScript to convert a value into its boolean equivalent. Here's what it does step-by-step:
+*** 3: The double exclamation marks (!!) are used in JavaScript to convert a value into its boolean equivalent. Here's what it does step-by-step:
 
 First Exclamation Mark (!): Converts the value into its opposite boolean form.
 
@@ -184,9 +147,13 @@ In this case:
 
 state.chat.typingUsers[user]:
 This accesses the typingUsers object to check if the current user is typing.
-The value could be undefined, null, or another falsy value if the user isn't typing.
+The value could be undefined, null, or another falsy value if the user isn't typing, in that case user would be undefined or null, then:
 !!state.chat.typingUsers[user]:
-Ensures that the value is converted into true or false, regardless of its original type.
+the first "!" negates the value which in this case is undefined and "!undefined === true".
+the second "!" negates the first "!" from true to false, therefore, in the case of user being undefined:
+!!state.chat.typingUsers[user] = false
+
+That way we ensure that the value is converted into true or false, regardless of its original type.
 
 
 */
