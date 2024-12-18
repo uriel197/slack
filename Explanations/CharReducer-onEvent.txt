@@ -1,0 +1,27 @@
+When an ADD_MESSAGE or ADD_INCOMING_MESSAGE action is dispatched
+============================================
+
+For Outgoing Messages (ADD_MESSAGE):
+The reducer takes the current state of the chat (e.g., state.chat.messages) and adds the new message to the end of the messages list.
+The updated state is sent to the subscribers.
+
+2. Subscribers Get Notified:
+The store manages a list of subscribers (functions that are notified of state changes).
+When the state updates, the store runs all subscriber functions, passing the updated state to them.
+In this case, onEvent is one of these subscribers and reacts to specific action.type values (ADD_MESSAGE, ADD_INCOMING_MESSAGE).
+
+3. onEvent Updates the UI:
+onEvent listens for actions (ADD_MESSAGE or ADD_INCOMING_MESSAGE) and uses the updated state to:
+Access the newly added message (the last one in state.chat.messages).
+Create a new UI element for the message (using ChatListItem and createElement).
+Append the new message to the DOM (this.refs.messages.appendChild).
+
+For Incoming Messages (ADD_INCOMING_MESSAGE):
+A new message is received from the server.
+An ADD_INCOMING_MESSAGE action is dispatched to the store.
+The reducer adds the incoming message to state.chat.messages.
+The store notifies subscribers (like onEvent).
+onEvent:
+Appends the new message to the UI.
+Does not scroll the chat to the bottom, preserving the user's current view if they're reading older messages.
+This design effectively separates state management (via the store and reducer) from UI rendering (via onEvent), ensuring that the application remains responsive and efficient.

@@ -38,21 +38,16 @@ io.on("connection", (socket) => {
   socket.on("message", async (message) => {
     const { userId, channelId, text } = message;
     const createdAt = Date.now();
-    const createdMessage = await messageService.createMessage(
+    const createdMessage = await messageService.createMessageView(
       userId,
       channelId,
       createdAt,
       text
     );
-    socket.emit(createdMessage);
-    socket.broadcast.emit(createdMessage);
+    socket.emit("my-message", createdMessage); // This line emits an event to the specific client (the socket that initiated the connection).
+    socket.broadcast.emit(createdMessage); // This line broadcasts the createdMessage to all other connected clients except the client that triggered the code.
   });
-  //  The server listens for a "message" event sent by a specific connected client.
-  socket.on("message", (message) => {
-    console.log(message);
-    console.log("--------------------------");
-  });
-});
+}); // Explanations/MessageView-UserView
 
 app.use(
   session({
@@ -66,7 +61,7 @@ app.use(
       maxAge: 1000 * 60 * 60 * 24 * 14, // Optional: cookie expiration in milliseconds (14 days here)
     },
   })
-);
+); // Explanations/sessions
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); /* 1 */
@@ -126,7 +121,17 @@ app.get(
   "/api/v1/logged-in",
   catchError(async (req, res) => {
     const user = await userService.getUser(req.session.userId);
-    res.json(UserView(user));
+    res.json(UserView(user)); // UserView transforms a database user object (retrieved via your backend) into a clean, frontend-friendly format.
+  })
+);
+
+app.get(
+  "/api/v1/messages/:channelId",
+  isLoggedIn,
+  catchError(async (req, res) => {
+    const { channelId } = req.params;
+    const views = await messageService.getMessageViews(channelId);
+    res.json(views);
   })
 );
 

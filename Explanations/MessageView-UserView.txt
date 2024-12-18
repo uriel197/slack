@@ -1,0 +1,121 @@
+1. Client Emits "message" Event
+On the client-side (main.js), the user sends a message:
+
+window.socket.emit("message", async (message));
+The client emits the message event with a payload containing the text property.
+
+2. Server Receives the "message" Event
+On the server side, you have a Socket.IO listener:
+
+io.on("connection", (socket) => {
+  socket.on("message", async (message) => {
+    const { userId, channelId, text } = message;
+    const createdAt = Date.now();
+    const createdMessage = await messageService.createMessageView(
+      userId,
+      channelId,
+      createdAt,
+      text
+    );
+    socket.emit("my-message", createdMessage);
+    socket.broadcast.emit(createdMessage);
+  });
+});
+
+3. createMessageView Is Called and inside this function createMessage() is called:
+
+createMessageView = async (userId, channelId, createdAt, text) => {
+    const message = await this.createMessage(
+        userId,
+        channelId,
+        createdAt,
+        text
+    );
+    const user = await this.userService.getUser(userId);
+    return MessageView(message, user);
+};
+
+createMessage(userId, channelId, createdAt, text) saves the new message to the database:
+
+createMessage = (userId, channelId, createdAt, text) =>
+  new this.Model({ userId, channelId, createdAt, text }).save();
+
+example of message created:
+{
+  _id: "6758a77857c1af50b945ad8e",
+  userId: "12345",
+  channelId: "67890",
+  createdAt: "2024-06-12T12:00:00Z",
+  text: "Hello, world!",
+}
+
+next line inside of createMessageView:
+const user = await this.userService.getUser(userId); retrieves the user from the database:
+
+getUser = (userId) => this.Model.findById(userId);
+
+This retrieves the user's information from the database. Example user object:
+
+{
+  _id: "12345",
+  username: "JohnDoe",
+  lastVisitedChannel: "67890",
+}
+
+MessageView transforms the message and user into a clean view:
+
+const MessageView = (message, user) => {
+  const view = Object.assign({}, message._doc, { user: UserView(user) });
+  delete view.userId;
+  return view;
+};
+Combines message and UserView(user):
+
+Mongoose documents contain a _doc property that holds the plain JavaScript object representing the document.
+
+const UserView = (user) => {
+  return {
+    id: user._id,
+    username: user.username,
+    lastVisitedChannel: user.lastVisitedChannel,
+  };
+};
+Resulting messageView:
+
+{
+  _id: "6758a77857c1af50b945ad8e",
+  channelId: "67890",
+  createdAt: "2024-06-12T12:00:00Z",
+  text: "Hello, world!",
+  user: {
+    id: "12345",
+    username: "JohnDoe",
+    lastVisitedChannel: "67890",
+  },
+}
+
+4. Server Broadcasts the Message
+Once the messageView is ready, the server broadcasts it to all users in the channelId:
+
+io.to(channelId).emit("message", messageView);
+io.to(channelId) sends the message to all clients connected to that specific channel.
+5. Client Receives the "message" Event
+On the client-side, you listen for the message event:
+
+window.socket.on("message", (message) => {
+  console.log("Received message:", message);
+  console.log("--------------------------");
+});
+message contains the transformed messageView object:
+
+{
+  _id: "6758a77857c1af50b945ad8e",
+  channelId: "67890",
+  createdAt: "2024-06-12T12:00:00Z",
+  text: "Hello, world!",
+  user: {
+    id: "12345",
+    username: "JohnDoe",
+    lastVisitedChannel: "67890",
+  },
+}

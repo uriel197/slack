@@ -7,7 +7,7 @@ const UserModel = require("./userService/UserModel");
 
 // instances of the Models
 const userService = new UserService(UserModel);
-const messageService = new MessageService(MessageModel);
+const messageService = new MessageService(MessageModel, userService);
 const channelService = new ChannelService(ChannelModel);
 
 module.exports = {

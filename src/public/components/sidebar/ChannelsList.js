@@ -10,7 +10,7 @@ class ChannelList extends Component {
     /* 1 */
     if (action.type === SET_SELECTED_CHANNEL) {
       const refs = Object.values(this.refs);
-      console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected}
+      //console.log(this.refs); // {general: li.sidebar__li.sidebar__li--selected}
 
       refs.forEach((ref) => {
         ref.classList.remove("sidebar__li");
@@ -31,7 +31,9 @@ class ChannelList extends Component {
   };
 
   renderListItem = ({ selected, name }) => {
-    const className = selected ? "sidebar__li--selected" : "sidebar__li";
+    const className = selected
+      ? "sidebar__li--selected sidebar__li"
+      : "sidebar__li";
     return `
       <li data-ref="${name}" class="${className}">
         <a onclick="channelsList.loadChannel(event, '${name}')" class="sidebar__link">
@@ -41,7 +43,7 @@ class ChannelList extends Component {
     `;
   };
   render = () => {
-    console.log(this.props);
+    //console.log(this.props);
     // channels: Array(2)
     // 0: {channelName: 'general'}
     // 1: {channelName: 'foo'}
