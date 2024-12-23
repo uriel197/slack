@@ -22,30 +22,13 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.join(__dirname, "src", "views", "main.html"),
       filename: "main.html",
+      inject: "body", // Ensure scripts are injected at the end of the body
     }),
     new MiniCssExtractPlugin({
       filename: "main.css", // Output CSS file
     }),
   ],
 };
-
-// const path = require("path");
-// const HtmlWebpackPlugin = require("html-webpack-plugin");
-
-// module.exports = {
-//   entry: path.join(__dirname, "src", "public", "components", "main.js"),
-//   output: {
-//     path: path.join(__dirname, "dist"),
-//     publicPath: "/",
-//     filename: "bundle.js", // Fixed the typo here
-//   },
-//   mode: "production", // Set mode to production for optimization
-//   plugins: [
-//     new HtmlWebpackPlugin({
-//       template: path.join(__dirname, "src", "views", "index.html"),
-//     }),
-//   ],
-// };
 
 /*
      -----------------------------------------------

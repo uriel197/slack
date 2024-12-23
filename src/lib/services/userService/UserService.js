@@ -33,6 +33,8 @@ class UserService {
 
   createUser = (name) => new this.Model({ name }).save();
 
+  getUsersInChat = () => this.Model.find({});
+
   getUser = (userId) => this.Model.findById(userId);
 
   getUsers = (userIdArray) =>

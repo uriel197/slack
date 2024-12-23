@@ -47,9 +47,11 @@ const socket = socketIO();
   store.dispatch(SetUser(user));
   store.dispatch(SetChannels(channels));
   store.dispatch(SetMessages(messages.map(Message)));
+  // Explanations/dispatch-noReducers
   window.socket = socket;
 
   // the browser checks the index file of each of the following folders
+  require("./alert");
   require("./sidebar");
   require("./header");
   require("./chat");

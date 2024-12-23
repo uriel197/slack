@@ -1,0 +1,48 @@
+How does dispatch works with no reducers
+========================================
+
+when the application starts, an instance of Alert is created in alert/index.js which adds the alertModal in the DOM but without listing the users which is what alertDirectMessageList renders, then, when the user clicks on the direct messages button, the eventListener in sidebar/index.js is executed and an instance of alertDirectMessageList is created and dispatched to the store, code below is what is dispatched:
+
+const data = {
+    title,
+    component: createElement(window.alertDirectMessageList),
+  };
+  
+  store.dispatch(ShowAlert(data));
+
+Then The store processes the dispatched action. This involves two main steps:
+
+a. Pass the Action Through Reducers
+If there's a reducer configured to handle SHOW_ALERT, it updates the relevant state slice.
+
+In our case, we don’t have a reducer managing the alert state because the alert’s behavior is handled locally by the Alert component. So, The SHOW_ALERT action doesn't modify any global state.
+
+b. Notify Subscribers
+The store notifies all its subscribers. For instance:
+
+Your Alert component is subscribed to the alert state via this.setSubscriber("alert", this.onEvent).
+The onEvent method in Alert is triggered with the SHOW_ALERT action.
+3. Alert Reacts to the Action
+The Alert component's onEvent method handles the SHOW_ALERT action:
+
+onEvent = (state, action) => {
+  if (action.type === SHOW_ALERT) {
+    this.refs.title.textContent = action.value.title;
+
+    const child = this.refs.content.firstChild;
+    this.refs.content.replaceChild(action.value.component, child);
+
+    this.refs.alert.classList.add("alert--show");
+  }
+};
+Here’s what happens:
+
+Update Title: The alert’s title (this.refs.title.textContent) is updated to "Direct Messages".
+Replace Content: The component from data (which is the rendered alertDirectMessageList) replaces the existing child of this.refs.content.
+Show the Alert: The alert--show class is added to this.refs.alert, making the alert visible on the screen.
+4. UI Updates
+The alert modal now shows:
+
+The title "Direct Messages".
+The alertDirectMessageList component with the rendered list of users.
+This is achieved without a reducer because the Alert component handles the dispatched action directly, bypassing any need for global state changes.

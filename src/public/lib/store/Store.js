@@ -31,7 +31,7 @@ class Store {
     //reducerName: Name of the reducer (e.g., "chat").
     //reducer: The actual reducer function (e.g., chatReducer()).
     for (const [reducerName, reducer] of Object.entries(this.reducers)) {
-      console.log(this.reducers); //{sidebar: ƒ} reducerName = sidebar, reducer = (e,s)=> {…}
+      //console.log(this.reducers); //{sidebar: ƒ} reducerName = sidebar, reducer = (e,s)=> {…}
       const currentState = this.state[reducerName];
       // currentState Refers to the state before the current action is processed. It’s specific to a single reducer.
       newState[reducerName] = reducer(currentState, action);

@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
+    <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flack</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" media="screen" href="/main.css" />
   </head>
+
   <body>
     <aside class="sidebar">
       <h1 class="sidebar__header">Flack</h1>
       <h2 class="sidebar__channels">
         <label class="sidebar__channels-text" for="channels">Channels</label>
         <button
-          type="button"
           id="channels"
           data-js="channels"
           class="sidebar__plus-button"
@@ -41,12 +41,6 @@
         <aside data-js="actionbar" class="actionbar"></aside>
       </div>
     </main>
+    <div class="alert" data-js="alert"></div>
   </body>
 </html>
-
-<!-- =================================
-            COMMENTS - COMMENTS
-    ================================= 
- The line <div class="chat__input"></div> is being replaced by the <textarea> element inside the render() method of the Chat component. 
-In the component-based architecture we're using, the render() method is essentially "rendering" the HTML content dynamically, and the content from index.html is replaced when createElement(chat) is called to render the Chat component into the DOM.
-    -->
