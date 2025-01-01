@@ -6,7 +6,7 @@ const chatElement = document.querySelector("[data-js=chat-text]");
 
 const chat = new Chat();
 window.chat = chat;
-const chatNode = createElement(chat);
+const chatNode = createElement(window.chat);
 chatElement.parentNode.replaceChild(chatNode, chatElement);
 // replaceChild(chatNode, chatElement): Replaces the existing placeholder element (chatElement) with the newly created DOM structure for the chat.
 

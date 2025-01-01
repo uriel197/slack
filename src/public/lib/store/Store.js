@@ -27,6 +27,10 @@ class Store {
   //   }
   dispatch = (action) => {
     // Dispatch is like raising your hand to announce something important happened.
+    if (localStorage.getItem("__DEBUG__")) {
+      console.log(action);
+    }
+
     let newState = {};
     //reducerName: Name of the reducer (e.g., "chat").
     //reducer: The actual reducer function (e.g., chatReducer()).

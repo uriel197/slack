@@ -1,6 +1,7 @@
 const {
   SET_TYPING_USER,
   SET_MESSAGES,
+  RESET_TYPING_USERS,
   ADD_MESSAGE,
   ADD_INCOMING_MESSAGE,
 } = require("./chatEvents");
@@ -12,6 +13,8 @@ module.exports = (state, action) => {
       return Object.assign({}, state, { messages });
     case SET_MESSAGES:
       return Object.assign({}, state, { messages: action.value });
+    case RESET_TYPING_USERS:
+      return Object.assign({}, state, { typingUsers: {} });
     case SET_TYPING_USER:
       const typingUsers = Object.assign({}, state.typingUsers, {
         [action.value.user]: action.value.isTyping,

@@ -46,3 +46,18 @@ The alert modal now shows:
 The title "Direct Messages".
 The alertDirectMessageList component with the rendered list of users.
 This is achieved without a reducer because the Alert component handles the dispatched action directly, bypassing any need for global state changes.
+
+difference between this.dispatch(action) and store.dispatch(action)
+===================================================================
+
+1. this.dispatch:
+
+Is a reference to store.dispatch since it was bound to the store in the component prototype:
+
+this.dispatch = store.dispatch;
+
+Allows the component to directly send actions to the store without needing an explicit reference to the store.
+
+2. store.dispatch(action)
+Context: Refers explicitly to the dispatch method of the global store instance.
+Scope: Directly tied to the global store and can be accessed anywhere the store is imported or referenced.

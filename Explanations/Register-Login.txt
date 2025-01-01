@@ -1,0 +1,143 @@
+Registration and login process:
+==============================
+
+client is sent to the register page:
+
+router.get(
+  "/register",
+  catchError(async (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "views", "register.html"));
+  })
+);
+
+when client submits the form:
+
+router.post(
+  "/register",
+  catchError(async (req, res) => {
+    const { username, password } = req.body;
+    const user = await userService.registerUser(username, password);
+    req.session.userId = user.id;
+    res.redirect("/");
+  })
+);
+
+*** Note that a req.session.userId is created along with the user, our application uses a session management library, express-session. This middleware adds a session object to the req object, allowing us to store data for a user across requests. in app.js:
+
+app.use(
+  session({
+    secret: process.env.SECRET || "secret",
+    resave: false,
+    saveUninitialized: false,
+    name: "flack-session",
+    store: MongoStore.create({
+      mongoUrl: config.url,
+    }),
+  })
+);
+
+req.session.userId is accessible within route handlers via the req object passed by Express.
+
+
+The form is sent to UserServices.registerUser:
+
+  registerUser = async (username, password) => {
+    const maybeUser = await this.Model.findOne({ username });
+    if (maybeUser) throw new Error("Username taken");
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+    return new this.Model({ username, password: hash }).save();
+  };
+
+And a new Model is created in the DB:
+
+{
+    _id: ObjectId('6771062842e2eac9a528abfb'),
+    username: 'uriel',
+    password: '$2a$10$PPyx6rzc2eu5OvXJcnJXPuThD9A6CENx6flaz/dq31v6l1WnpKOO.',
+    __v: 0,
+    lastVisitedChannelId: '67710f8942e2eac9a528ac36'
+ }
+
+app.app.js is the first client-side file served to the client and after setting the reducers it sets the user:
+
+  const incomingUser = await isLoggedIn(); // an API that requests info to the server about the user /* 1 */
+  const user = User(incomingUser);  /* 2 */
+  store.dispatch(SetUser(user)); // user is set in the Store
+  window.socket.emit("init", user.id); // we initialize all of the chat rooms we are a part of when the page loads using user.id.
+
+Server-side:
+============
+
+The file handling server actions is src/app.js where it initializes the io connection:
+
+io.on("connection", async (socket) => {
+  socket.on("init", async (userId) => {
+    socket.join(userId);
+    const channels = await channelService.getChannels(userId);
+    channels.forEach((channel) => {
+      socket.join(channel.id);
+    });
+  }); 
+})
+
+socket.on("init", async (userId) => {...}):
+This listens for the "init" event from the client which is sent in the previous paragraph(window.socket.emit("init", user.id)). When the client sends this event, they include their userId as a parameter.
+
+socket.join(userId):
+Adds the user's userId as a room they belong to. In other words, it Joins the socket to the user's unique private room (userId).
+
+The server handles this event asynchronously because it interacts with a service (channelService) to fetch data.
+
+
+
+
+
+
+	=======================================================
+		    COMMENTS - COMMENTS - COMMENTS
+	=======================================================
+
+*** 1: function in api/usersApi.js
+
+const isLoggedIn = async () => {
+  const req = Request("GET");
+  const res = await fetch("/api/v1/logged-in", req);
+  return res.json();
+};
+
+The server processes the request in routes.userRoutes.js:
+
+router.get(
+  "/api/v1/logged-in",
+  catchError(async (req, res) => {
+    const userView = await userService.getCurrentUserView(req.session.userId);
+    res.json(userView);
+  })
+);
+
+CurrentUserView extends UserView which returns a simplified version of the User Model:
+
+class UserView {
+  constructor(user) {
+    this.id = user._id;
+    this.username = user.username;
+    this.lastVisitedChannelId = user.lastVisitedChannelId; // from CurrentUserView;
+  }
+}
+
+Therefore incommingUser = {
+    this.id = user._id;
+    this.username = user.username;
+    this.lastVisitedChannelId = user.lastVisitedChannelId;
+}
+
+*** 2: const user = User(incomingUser) where User is a component in app/User.js:
+
+const User = (incomingUser) => {
+  return {
+    id: incomingUser.id || "",
+    username: incomingUser.username || "",
+    lastVisitedChannelId: incomingUser.lastVisitedChannelId || "",
+  };
+};

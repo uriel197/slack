@@ -4,10 +4,23 @@ class ChannelService {
     this.Model = Model;
   }
 
-  createChannel = (name) => new this.Model({ name }).save();
+  createChannel = async (name, type, usersInChannel) => {
+    const fingerprint = Buffer.from(name.split("").sort().join("")).toString(
+      "base64"
+    );
+    const channel = await this.Model.findOne({ fingerprint });
+    if (channel) return channel;
+    return new this.Model({
+      name,
+      fingerprint,
+      type,
+      usersInChannel,
+    }).save();
+  };
 
   getChannel = (channelId) => this.Model.findById(channelId);
 
-  getChannels = () => this.Model.find({});
+  getChannels = (userId) => this.Model.find({ usersInChannel: userId });
 }
+
 module.exports = ChannelService;

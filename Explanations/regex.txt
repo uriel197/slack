@@ -1,0 +1,183 @@
+PARAM_REGEX_GLOBAL: /:[A-Za-z0-9]+/g
+
+: Matches a literal colon (:). since we are dealing with url parameters which start with ":" eg: "/:channelId", that serves a a sign for the regex to know what part of the string to look for.
+[A-Za-z0-9]+: Matches one or more alphanumeric characters (letters and digits).
+/g: Global flag, ensuring the regex replaces all matches in the string, not just the first one.
+
+This pattern matches segments of the string that look like :paramName, where paramName is any combination of alphanumeric characters.
+
+route: A string representing a route template, e.g., #/channels/:id or #/users/:userId/posts/:postId.
+
+route.replace(PARAM_REGEX_GLOBAL, "([A-Za-z0-9]+)"):
+
+For each match of PARAM_REGEX_GLOBAL (e.g., :id, :userId), replace it with ([A-Za-z0-9]+).
+The replacement string, ([A-Za-z0-9]+), creates a capturing group in the final regex. This group will match the dynamic parameter's value (like 123 or user42) in the actual URL.
+
+example:
+
+const route = "#/users/:userId/posts/:postId";
+const PARAM_REGEX_GLOBAL = /:[A-Za-z0-9]+/g;
+
+const result = route.replace(PARAM_REGEX_GLOBAL, "([A-Za-z0-9]+)");
+console.log(result); // "#/users/([A-Za-z0-9]+)/posts/([A-Za-z0-9]+)"
+
+Explanation:
+The :userId part is replaced by ([A-Za-z0-9]+), so it can match any alphanumeric value.
+The :postId part is also replaced similarly.
+
+Purpose
+This transformation prepares the route string to be converted into a regular expression that can:
+
+1. Match URLs with specific dynamic segments.
+E.g., #/users/42/posts/123 matches the generated regex.
+2. Capture the dynamic parameter values.
+The first ([A-Za-z0-9]+) captures 42.
+The second ([A-Za-z0-9]+) captures 123.
+
+The resulting string #/users/([A-Za-z0-9]+)/posts/([A-Za-z0-9]+) can now be passed into new RegExp to create a working regex:
+
+const regex = new RegExp(result);
+const url = "#/users/42/posts/123";
+
+const match = url.match(regex);
+match = [
+  "#/users/42/posts/123", // Full match
+  "42",                   // First captured group: userId
+  "123"                   // Second captured group: postId
+]
+
+
+This is the core mechanism behind dynamic route matching in many custom routing implementations.
+
+
+ In JavaScript, the result of a RegExp.prototype.match() call returns an array, where:
+
+match[0] contains the entire string that matched the regex.
+Subsequent indices (match[1], match[2], etc.) contain the values of the captured groups (the parts of the regex enclosed in parentheses).
+
+const paramNames = this._getParamNames(route);
+
+The _getParamNames method extracts parameter names (e.g., :userId, :postId) from the route template.
+
+_getParamNames = (route) => {
+  const match = route.match(PARAM_REGEX_GLOBAL) || [];
+  return match.map((str) => str.slice(1));
+};
+
+The route.match(PARAM_REGEX_GLOBAL) finds all dynamic parameters in the route. For our example:
+
+const match = route.match(PARAM_REGEX_GLOBAL); // [":userId", ":postId"]
+
+Map to ParamNames removes the ":" prefix from each parameter name using .slice(1):
+
+const paramNames = match.map((str) => str.slice(1)); // ["userId", "postId"]
+
+Final Output:
+const paramNames = ["userId", "postId"];
+
+Next line:
+const params = this._getParams(match, paramNames);
+
+_getParams = (match, paramNames) => {
+  const paramValues = match.slice(1);
+  return paramNames.reduce((params, name, index) => {
+    params[name] = paramValues[index];
+    return params;
+  }, {});
+};
+
+The match.slice(1) removes the full match (index 0) and keeps only the captured values:
+
+match = ["#/users/42/posts/123", "42", "123"];
+const paramValues = match.slice(1); // ["42", "123"]
+
+Map Names to Values: The reduce function pairs each paramName with its corresponding paramValue:
+
+const params = paramNames.reduce((params, name, index) => {
+  params[name] = paramValues[index];
+  return params;
+}, {});
+Iteration by iteration:
+
+First Iteration:
+name = "userId"
+paramValues[0] = "42"
+params = { userId: "42" }
+Second Iteration:
+name = "postId"
+paramValues[1] = "123"
+params = { userId: "42", postId: "123" }
+
+Final Output:
+const params = { userId: "42", postId: "123" };
+
+Combined Output:
+const paramNames = ["userId", "postId"];
+const params = { userId: "42", postId: "123" };
+
+Next line:
+const resolvedRouteUrl = this._createUrl(route, match);
+
+The _createUrl method reconstructs the full URL using the matched values (match) and the route template (route).
+
+_createUrl = (route, match) => {
+  return match.slice(1).reduce((str, paramValue) => {
+    return str.replace(PARAM_REGEX, paramValue);
+  }, route);
+};
+
+Takes the route (#/users/:userId/posts/:postId) and replaces dynamic parameters (:userId, :postId) with their corresponding matched values from match.
+For example:
+route = "#/users/:userId/posts/:postId"
+match = ["#/users/42/posts/123", "42", "123"]
+Result: resolvedRouteUrl = "#/users/42/posts/123"
+
+if(url === resolvedRouteUrl)
+routeToCall = { route, params };
+
+If the URL matches the resolved route, the router stores the matched route and its parameters in the routeToCall object:
+routeToCall = { route: "#/users/:userId/posts/:postId", params: { userId: "42", postId: "123" } }
+
+Purpose:
+Prepare the route and its dynamic parameters to be used in the route's callback.
+
+if (routeToCall)
+
+Checks if a matching route (routeToCall) was found.
+If routeToCall exists, it proceeds to call the corresponding route handler.
+
+if (routeToCall) {
+  const params = routeToCall.params;
+  this._routes[routeToCall.route](params);
+}
+
+How It Works:
+Extracts params from routeToCall.
+Calls the callback function associated with the matched route (this._routes[routeToCall.route]), passing in params.
+For example:
+
+routeToCall.route = "#/users/:userId/posts/:postId"
+this._routes[routeToCall.route] is the callback associated with #/users/:userId/posts/:postId.
+params = { userId: "42", postId: "123" }
+The callback is called with params.
+
+Purpose:
+Invoke the correct route handler with the necessary parameters.
+
+5. Fallback for Empty Hash:
+
+else if (window.location.hash === "" && this._routes["/"]) {
+  this._routes["/"]({});
+}
+
+What It Does:
+Handles the case when:
+
+The window.location.hash is empty (""), meaning there is no specific route in the URL.
+A route for the root path ("/") exists in this._routes.
+
+How It Works:
+Calls the callback associated with the root path (this._routes["/"]) and passes an empty parameter object ({}).
+Purpose:
+Ensure that the router can handle the root path gracefully when there is no hash in the URL.
+

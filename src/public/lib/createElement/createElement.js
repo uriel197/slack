@@ -24,6 +24,7 @@ const makeCreateElement = (domParser) => {
       const childElement = component.children[childName];
       elements.forEach(replaceNode(childName, childElement));
     });
+    delete component.children;
     return doc.body.firstChild;
   };
 };

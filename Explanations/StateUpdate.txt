@@ -64,3 +64,20 @@ onEvent = (state, action) => {
   }
 };
 Action: The this.refs.typing element is updated to display the appropriate typing message.
+
+How the methods Work Together:
+==============================
+
+onEvent Method: Reacts to changes in the application's state, resetting the classes for all channels when a new channel is selected.
+
+onClick Event: Triggers the loadChannel method, which updates the state by dispatching the SetSelectedChannel action and visually marks the clicked channel as selected.
+
+Here’s a quick summary of their interaction:
+
+User clicks a channel: onClick triggers loadChannel.
+
+loadChannel Dispatches Action: SetSelectedChannel action is dispatched to update the selected channel in the store.
+
+Store Updates: The store’s state changes, triggering subscribers.
+
+onEvent Handles State Change: onEvent method resets the channel classes to ensure only the selected channel is highlighted.

@@ -1,4 +1,6 @@
 const bcrypt = require("bcryptjs");
+const CurrentUserView = require("./CurrentUserView");
+const UserView = require("./UserView");
 
 class UserService {
   constructor(Model) {
@@ -27,15 +29,25 @@ class UserService {
 
   setLastVisitedChannel = async (userId, channelId) => {
     const user = await this.getUser(userId);
-    user.lastVisitedChannel = channelId;
+    user.lastVisitedChannelId = channelId;
     return user.save();
   };
 
-  createUser = (name) => new this.Model({ name }).save();
+  createUser = async (name) => {
+    const user = await this.Model.find({ name });
+    if (user) throw new Error(`${name} is taken`);
+    return new this.Model({ name }).save();
+  };
 
   getUsersInChat = () => this.Model.find({});
 
   getUser = (userId) => this.Model.findById(userId);
+
+  getCurrentUserView = async (userId) => {
+    const user = await this.Model.findById(userId);
+    if (!user) throw new Error(`User not found for id: ${userId}`);
+    return new CurrentUserView(user);
+  };
 
   getUsers = (userIdArray) =>
     this.Model.find({ _id: { $in: userIdArray } }); /* 1 */
