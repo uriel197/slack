@@ -10,12 +10,6 @@ router.get(
   catchError(async (req, res) => {
     const { channelId } = req.params;
     const views = await messageService.getMessageViews(channelId);
-    if (views) {
-      console.log("messageRoutes:", views);
-    } else {
-      console.log("messageRoutes: no views");
-    }
-
     res.json(views);
   })
 );

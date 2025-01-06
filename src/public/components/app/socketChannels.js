@@ -8,7 +8,6 @@ const { AddChannel } = require("../sidebar/sidebarActions");
 
 window.socket.on("started-typing", (message) => {
   const { user, channelId } = message;
-  console.log(user);
   if (store.state.sidebar.selectedChannel.id === channelId) {
     store.dispatch(SetTypingUser({ user, isTyping: true }));
   }
@@ -22,8 +21,6 @@ window.socket.on("stopped-typing", (message) => {
 });
 
 window.socket.on("my-message", (message) => {
-  console.log("socketChannels.myMessage:", message);
-
   store.dispatch(AddMessage(Message(message)));
 });
 
@@ -36,9 +33,6 @@ window.socket.on("first-direct-message", async (channelId) => {
 
 window.socket.on("message", async (incomingMessage) => {
   const message = Message(incomingMessage);
-  if (message) console.log("socketChannels.message:", message);
-  else console.log("socketChannels.message: no message");
-
   if (store.state.sidebar.selectedChannel.id === message.channelId) {
     store.dispatch(AddIncomingMessage(message));
   }

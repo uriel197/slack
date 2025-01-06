@@ -21,6 +21,8 @@ class ChannelService {
   getChannel = (channelId) => this.Model.findById(channelId);
 
   getChannels = (userId) => this.Model.find({ usersInChannel: userId });
+
+  getPublicChannels = () => this.Model.find({ type: "channel" });
 }
 
 module.exports = ChannelService;

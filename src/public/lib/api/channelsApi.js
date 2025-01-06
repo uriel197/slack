@@ -11,6 +11,12 @@ const getChannel = async (channelId) => {
   return res.json();
 };
 
+const getAllChannels = async () => {
+  const req = Request("GET");
+  const res = await fetch("/api/v1/channels/all", req);
+  return res.json();
+};
+
 const getChannels = async () => {
   const req = Request("GET");
   const res = await fetch("/api/v1/channels", req);
@@ -25,7 +31,8 @@ const setLastVisitedChannel = async (channelId) => {
 
 module.exports = {
   createChannel,
-  getChannels,
+  getAllChannels,
   getChannel,
   setLastVisitedChannel,
+  getChannels,
 };
