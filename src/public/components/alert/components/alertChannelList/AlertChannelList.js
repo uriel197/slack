@@ -1,12 +1,29 @@
 const Component = require("../../../component");
 const ChannelListItem = require("./ChannelListItem");
-const { FilterChannels, CloseAlert } = require("../../alertActions");
+const {
+  FilterChannels,
+  ShowCreateChannel,
+  CloseAlert,
+} = require("../../alertActions");
+const Channel = require("../../../sidebar/Channel");
+const { getChannel, joinChannel } = require("../../../../lib/api/channelsApi");
+const createElement = require("../../../../lib/createElement");
 const { FILTER_CHANNELS } = require("../../alertEvents");
+const CreateChannel = require("./components/createChannel/CreateChannel");
+require("./components/createChannel");
+
 class AlertChannelList extends Component {
   constructor(props) {
     super(props);
     this.setSubscriber("alertChannelList", this.onEvent);
   }
+
+  createChannel = (event) => {
+    event.preventDefault();
+    window.createChannel = new CreateChannel();
+    const node = createElement(window.createChannel);
+    this.dispatch(ShowCreateChannel(node));
+  };
 
   filterChannels = (event) => {
     event.preventDefault();
@@ -16,6 +33,15 @@ class AlertChannelList extends Component {
 
   openChannel = async (event, channelId) => {
     event.preventDefault();
+    const incomingChannel = await getChannel(channelId);
+    const user = this.getStoreState().app.user;
+    const channel = Channel(incomingChannel, user);
+    const isInChannel = channel.usersInChannel.find(
+      (userId) => user.id === userId
+    );
+    if (!isInChannel) {
+      await joinChannel(channelId);
+    }
     this.dispatch(CloseAlert());
     window.location.hash = `#/channels/${channelId}`;
   };
@@ -41,17 +67,25 @@ class AlertChannelList extends Component {
   render = () => {
     return `
       <div>
-        <div class="alert__channel-header">
-          <h1>Browse Channels</h1>
-          <button class="alert__create-channel">Create channel</button>
-        </div>
-        <div class="alert__direct-message-list">
-          <form class="alert__direct-message-form">
-            <input onkeyup="alertChannelList.filterChannels(event)" class="alert__find-conversation" type="text" placeholder="Search channel" />
-          </form>
-          <ul data-ref="channelList" class="alert__direct-message-ul">${this.props.channels
-            .map(this.renderChannel)
-            .join("")}</ul>
+        <header class="alert__header">
+          <button class="alert__button" onclick="alertModal.close()">
+            <div class="alert__times">&times;</div>
+            esc
+          </button>
+        </header>
+        <div class="alert__content-container">
+            <div class="alert__channel-header">
+            <h1>Browse Channels</h1>
+            <button class="alert__create-channel" onclick="alertChannelList.createChannel(event)">Create channel</button>
+          </div>
+          <div class="alert__direct-message-list">
+            <form class="alert__direct-message-form">
+              <input onkeyup="alertChannelList.filterChannels(event)" class="alert__find-conversation" type="text" placeholder="Search channel" />
+            </form>
+            <ul data-ref="channelList" class="alert__direct-message-ul">${this.props.channels
+              .map(this.renderChannel)
+              .join("")}</ul>
+          </div>
         </div>
       </div>
     `;

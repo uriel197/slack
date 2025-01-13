@@ -23,6 +23,18 @@ const getChannels = async () => {
   return res.json();
 };
 
+const joinChannel = async (channelId) => {
+  const req = Request("PUT");
+  const res = await fetch(`/api/v1/channels/${channelId}/join`, req);
+  return res.json();
+};
+
+const leaveChannel = async (channelId) => {
+  const req = Request("PUT");
+  const res = await fetch(`/api/v1/channels/${channelId}/leave`, req);
+  return res.json();
+};
+
 const setLastVisitedChannel = async (channelId) => {
   const req = Request("PUT");
   const res = await fetch(`/api/v1/channels/${channelId}/last-visit`, req);
@@ -30,6 +42,8 @@ const setLastVisitedChannel = async (channelId) => {
 };
 
 module.exports = {
+  leaveChannel,
+  joinChannel,
   createChannel,
   getAllChannels,
   getChannel,

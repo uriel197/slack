@@ -26,10 +26,18 @@ class UserService {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
     const user = await new this.Model({ username, password: hash }).save();
-    const numUsers = await this.Model.estimatedDocumentCount({});
-
-    if (numUsers === 1) {
-      await this.channelService.createChannel("general", "channel", [user.id]);
+    const channel = await this.channelService.getChannelByName("general");
+    if (!channel) {
+      const channel = await this.channelService.createChannel(
+        "general",
+        "channel",
+        [user.id]
+      );
+      await this.setLastVisitedChannel(user.id, channel.id);
+    } else {
+      const join = this.channelService.joinChannel(user.id, channel.id);
+      const lastVisit = this.setLastVisitedChannel(user.id, channel.id);
+      await Promise.all([join, lastVisit]);
     }
     return user;
   };

@@ -33,10 +33,16 @@ io.on("connection", async (socket) => {
       socket.join(channel.id);
     });
   });
+
+  socket.on("leave", async (channelId) => {
+    socket.leave(channelId);
+  });
+
   socket.on("first-direct-message", (message) => {
     const { userId, channelId } = message;
     socket.to(userId).emit("first-direct-message", channelId);
   });
+
   socket.on("started-typing", (message) => {
     const { user, channelId } = message;
 

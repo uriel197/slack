@@ -1,5 +1,9 @@
 const Component = require("../component");
-const { SHOW_ALERT, CLOSE_ALERT } = require("./alertEvents");
+const {
+  SHOW_ALERT,
+  CLOSE_ALERT,
+  SHOW_CREATE_CHANNEL,
+} = require("./alertEvents");
 const { CloseAlert } = require("./alertActions");
 
 class Alert extends Component {
@@ -15,11 +19,15 @@ class Alert extends Component {
   onEvent = (state, action) => {
     // Explanations/dispatch-noReducers
     if (action.type === SHOW_ALERT) {
-      this.refs.title.textContent = action.value.title;
       const child = this.refs.content.firstChild;
       this.refs.content.replaceChild(action.value, child);
       this.refs.alert.classList.add("alert--show");
-    } else if (action.type === CLOSE_ALERT) {
+    }
+    if (action.type === SHOW_CREATE_CHANNEL) {
+      const child = this.refs.content.firstChild;
+      this.refs.content.replaceChild(action.value, child);
+    }
+    if (action.type === CLOSE_ALERT) {
       this.refs.alert.classList.remove("alert--show");
     }
   };
@@ -27,16 +35,7 @@ class Alert extends Component {
   render = () => {
     return `
       <div data-ref="alert" class="alert">
-        <header class="alert__header">
-          <button class="alert__button" onclick="alertModal.close()">
-            <div class="alert__times">&times;</div>
-            esc
-          </button>
-        </header>
-        <div class="alert__content-container">
-          <h1 data-ref="title"></h1>
-          <div data-ref="content" class="alert__content-container"> </div>
-        </div>
+        <div data-ref="content"> </div>
       </div>
     `;
   };
