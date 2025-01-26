@@ -9,6 +9,7 @@ module.exports = (incomingMessage) => {
     maybeCreatedAt = "";
   }
   return {
+    id: incomingMessage._id || "",
     channelId: incomingMessage.channelId || "",
     username: incomingMessage?.user?.username || "",
     createdAt: maybeCreatedAt,

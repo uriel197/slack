@@ -40,6 +40,7 @@ window.socket = socket;
     const channels = incomingChannels.map((incoming) =>
       Channel(incoming, store.state.app.user)
     );
+
     store.dispatch(SetChannels(channels));
   }
 })();

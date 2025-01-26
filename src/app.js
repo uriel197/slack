@@ -1,8 +1,22 @@
 // express
 const express = require("express");
 const app = express();
+const session = require("express-session");
 const config = require("./config");
 
+// We use http.Server to wrap the express app
+const http = require("http");
+const server = http.Server(app);
+const path = require("path");
+
+// Database
+const MongoStore = require("connect-mongo");
+
+// Socket.IO is initialized with the server instance
+const socketIO = require("socket.io");
+const io = socketIO(server);
+
+// middleware
 const { messageService, channelService } = require("./lib/services");
 const {
   messageRoutes,
@@ -10,19 +24,6 @@ const {
   generalRoutes,
   channelRoutes,
 } = require("./routes");
-
-// express-session
-const session = require("express-session");
-const MongoStore = require("connect-mongo");
-
-// We use http.Server to wrap the express app
-const http = require("http");
-const server = http.Server(app);
-const path = require("path");
-
-// Socket.IO is initialized with the server instance
-const socketIO = require("socket.io");
-const io = socketIO(server);
 
 // The server listens for new client connections.
 io.on("connection", async (socket) => {
@@ -34,15 +35,6 @@ io.on("connection", async (socket) => {
     });
   });
 
-  socket.on("leave", async (channelId) => {
-    socket.leave(channelId);
-  });
-
-  socket.on("first-direct-message", (message) => {
-    const { userId, channelId } = message;
-    socket.to(userId).emit("first-direct-message", channelId);
-  });
-
   socket.on("started-typing", (message) => {
     const { user, channelId } = message;
 
@@ -52,6 +44,11 @@ io.on("connection", async (socket) => {
   socket.on("stopped-typing", (message) => {
     const { user, channelId } = message;
     socket.to(channelId).emit("stopped-typing", { user, channelId });
+  });
+
+  socket.on("first-direct-message", (message) => {
+    const { userId, channelId } = message;
+    socket.to(userId).emit("first-direct-message", channelId);
   });
 
   socket.on("message", async (message) => {
@@ -66,6 +63,19 @@ io.on("connection", async (socket) => {
 
     socket.emit("my-message", createdMessage); // This line emits an event to the specific client (the socket that initiated the connection).
     socket.to(channelId).emit("my-message", createdMessage);
+  });
+
+  socket.on("update-message", async (messageId) => {
+    const updatedMessage = await messageService.getMessageView(messageId);
+    socket.to(updatedMessage.channelId).emit("update-message", updatedMessage);
+  });
+
+  socket.on("delete-message", async (message) => {
+    socket.to(message.channelId).emit("delete-message", message.id);
+  });
+
+  socket.on("leave", async (channelId) => {
+    socket.leave(channelId);
   });
 }); // Explanations/MessageView-UserView
 

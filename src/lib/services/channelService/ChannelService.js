@@ -23,6 +23,12 @@ class ChannelService {
     return channel.save();
   };
 
+  getChannel = (channelId) => this.Model.findById(channelId);
+
+  getChannels = (userId) => this.Model.find({ usersInChannel: userId });
+
+  getPublicChannels = () => this.Model.find({ type: "channel" });
+
   getChannelByName = (name) => {
     return this.Model.findOne({ name });
   };
@@ -41,12 +47,6 @@ class ChannelService {
     channel.usersInChannel = users;
     return channel.save();
   };
-
-  getChannel = (channelId) => this.Model.findById(channelId);
-
-  getChannels = (userId) => this.Model.find({ usersInChannel: userId });
-
-  getPublicChannels = () => this.Model.find({ type: "channel" });
 }
 
 module.exports = ChannelService;

@@ -43,7 +43,8 @@ switch (action.type) {
 }
 Action: The typingUsers object in the Redux store is updated.
 The key is the user string (e.g., "foo0.12345").
-The value is true for typing, and will eventually be set to false when the user stops typing.
+The value is true for typing, and will eventually be set to false when the user stops typing. 
+Computed Property Names: In object literals, you can use expressions inside square brackets to dynamically set the property name. In your case, action.value.user is evaluated, and its value is used as the property name for the new or updated property in the typingUsers object.
 
 ***5. State Change Triggers UI Update
 Chat Component (Chat.js):
@@ -76,7 +77,7 @@ Here’s a quick summary of their interaction:
 
 User clicks a channel: onClick triggers loadChannel.
 
-loadChannel Dispatches Action: SetSelectedChannel action is dispatched to update the selected channel in the store.
+loadChannel Dispatches Action: SetSelectedChannel action is dispatched to update the selected channel in the store which is handled by the appropriate reducer.
 
 Store Updates: The store’s state changes, triggering subscribers.
 

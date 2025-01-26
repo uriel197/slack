@@ -40,7 +40,7 @@ router.post(
   catchError(async (req, res) => {
     const { username, password } = req.body;
     const user = await userService.registerUser(username, password);
-    req.session.userId = user.id;
+    req.session.userId = user.id; /* 1 */
     res.redirect("/");
   })
 );
@@ -56,3 +56,18 @@ router.post(
 );
 
 module.exports = router;
+
+/*
+    ======================================
+        COMMENTS - COMMENTS - COMMENTS
+    ======================================
+
+*** 1: The user.id property comes from how Mongoose maps the _id field of MongoDB documents to a more convenient id getter in JavaScript.
+It provides a string representation of the _id field (which is an ObjectId type) for easier usage in JavaScript code.
+console.log(user._id); // ObjectId("64b2d4e345abc12345678901")
+console.log(user.id);  // "64b2d4e345abc12345678901" (string)
+
+ i am not requiring mongoose in the file, how do i have access to mongoose user.id then?
+The user object returned by userService.registerUser is a Mongoose document because registerUser uses this.Model (a Mongoose model) to create and save the user.
+When you create or query documents using a Mongoose model, the returned object is an instance of a Mongoose document. This includes all virtual properties and methods, like user.id.
+*/

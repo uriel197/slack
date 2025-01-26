@@ -1,5 +1,10 @@
 const { SetTypingUser } = require("../chat/chatActions");
-const { AddIncomingMessage, AddMessage } = require("../chat/chatActions");
+const {
+  AddIncomingMessage,
+  IncomingUpdateMessage,
+  AddMessage,
+  IncomingDeleteMessage,
+} = require("../chat/chatActions");
 const { getChannel } = require("../../lib/api/channelsApi");
 const store = require("../../lib/store");
 const Message = require("../chat/Message");
@@ -20,10 +25,6 @@ window.socket.on("stopped-typing", (message) => {
   }
 });
 
-window.socket.on("my-message", (message) => {
-  store.dispatch(AddMessage(Message(message)));
-});
-
 window.socket.on("first-direct-message", async (channelId) => {
   const hasChannel = store.state.sidebar.channels.find(
     (channel) => channel.id === channelId
@@ -40,4 +41,19 @@ window.socket.on("message", async (incomingMessage) => {
   if (store.state.sidebar.selectedChannel.id === message.channelId) {
     store.dispatch(AddIncomingMessage(message));
   }
+});
+
+window.socket.on("my-message", (message) => {
+  store.dispatch(AddMessage(Message(message)));
+});
+
+window.socket.on("update-message", async (incomingMessage) => {
+  const message = Message(incomingMessage);
+  if (store.state.sidebar.selectedChannel.id === message.channelId) {
+    store.dispatch(IncomingUpdateMessage(message));
+  }
+});
+
+window.socket.on("delete-message", (messageId) => {
+  store.dispatch(IncomingDeleteMessage(messageId));
 });
