@@ -32,7 +32,10 @@ router.add("/channels/:channelId", async (params) => {
   store.dispatch(SetSelectedChannel(channel));
   setLastVisitedChannel(channelId);
   const messages = await getMessages(channelId);
-  store.dispatch(SetMessages(messages.map(Message)));
+  store.dispatch(
+    SetMessages(messages.map((incoming) => new Message(incoming)))
+  );
   store.dispatch(ScrollToBottom());
 });
+
 router.listen();
