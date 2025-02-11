@@ -66,7 +66,7 @@ io.on("connection", async (socket) => {
     );
 
     socket.emit("my-message", createdMessage); // This line emits an event to the specific client (the socket that initiated the connection).
-    socket.to(channelId).emit("my-message", createdMessage);
+    socket.to(channelId).emit("message", createdMessage);
   });
 
   socket.on("reply", async (reply) => {

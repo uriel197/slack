@@ -14,6 +14,11 @@ const user = new mongoose.Schema({
   lastVisitedChannelId: {
     type: String,
   },
+
+  unreadMessages: {
+    type: Object,
+    default: {},
+  },
 });
 
 module.exports = mongoose.model("User", user);

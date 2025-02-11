@@ -72,6 +72,29 @@ router.put(
 );
 
 router.put(
+  "/api/v1/channels/:channelId/set-unread-messages",
+  isLoggedIn,
+  catchError(async (req, res) => {
+    const { channelId } = req.params;
+    const { userId } = req.session;
+    console.log("User ID:", userId, "Channel ID:", channelId);
+    const { unreadMessages } = req.body;
+    console.log("unreadMessages:", unreadMessages);
+    try {
+      const user = await userService.setUnreadMessages(
+        userId,
+        channelId,
+        unreadMessages
+      );
+      console.log("Updated unread messages:", user);
+      res.json(new CurrentUserView(user));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update unread messages" });
+    }
+  })
+);
+
+router.put(
   "/api/v1/channels/:channelId/leave",
   isLoggedIn,
   catchError(async (req, res) => {

@@ -17,7 +17,7 @@ const {
   DELETE_MESSAGE,
   ADD_INCOMING_MESSAGE,
 } = require("./chatEvents");
-const { getReplies, deleteMessage } = require("../../lib/api/chatApi");
+const { deleteMessage, getReplies } = require("../../lib/api/chatApi");
 const MessageMenu = require("./components/messageMenu/MessageMenu");
 const Message = require("./Message");
 const Thread = require("../actionbar/components/thread/Thread");
@@ -37,14 +37,12 @@ const {
   ScrollThreadToBottom,
 } = require("../actionbar/components/thread/threadActions");
 
-// styles variables
 const RETURN_KEY = 13;
 const textAreaName = "chatTextArea";
 
 class Chat extends Component {
   constructor(props) {
-    /* 1 */
-    super(props); // Calls the parent Component constructor
+    super(props);
     this.setSubscriber("chat", this.onEvent);
   }
 
@@ -70,6 +68,7 @@ class Chat extends Component {
     } else if (event.keyCode === RETURN_KEY) {
       this.dispatch(AddTextAreaRow("edit-text"));
     }
+
     if (event.target.value.length < 1) {
       this.dispatch(ResetTextAreaHeight("edit-text"));
     }
@@ -77,7 +76,7 @@ class Chat extends Component {
 
   deleteMessage = async (event, messageId) => {
     event.preventDefault();
-    const incoming = await deleteMessage(messageId); // API
+    const incoming = await deleteMessage(messageId);
     const message = new Message(incoming);
     this.dispatch(DeleteMessage(message));
     window.socket.emit("delete-message", message);
@@ -86,12 +85,11 @@ class Chat extends Component {
   postMessage = (event) => {
     event.preventDefault();
     if (event.keyCode === RETURN_KEY && !event.shiftKey) {
-      // The explicit check for !event.shiftKey in the first case ensures that the message is only sent if Enter is pressed without Shift.
-
       this._sendMessage(event, "message");
     } else if (event.keyCode === RETURN_KEY) {
       this.dispatch(AddTextAreaRow(textAreaName));
     }
+
     const user = this.getStoreState().app.user.username;
     const channelId = this.getStoreState().sidebar.selectedChannel.id;
 
@@ -103,7 +101,7 @@ class Chat extends Component {
     }
   };
 
-  _sendMessage(event, eventName) {
+  _sendMessage = (event, eventName) => {
     const state = this.getStoreState();
     const message = {
       userId: state.app.user.id,
@@ -113,7 +111,7 @@ class Chat extends Component {
     window.socket.emit(eventName, message);
     event.target.value = "";
     this.dispatch(ResetTextAreaHeight(textAreaName));
-  }
+  };
 
   openThreadAction = async (event, messageId) => {
     event.preventDefault();
@@ -128,10 +126,10 @@ class Chat extends Component {
     this.dispatch(ScrollThreadToBottom());
   };
 
-  closeMessageMenu(event) {
+  closeMessageMenu = (event) => {
     event.preventDefault();
     this.state.messageMenu.remove();
-  }
+  };
 
   openMoreActions = (event, messageId) => {
     event.preventDefault();
@@ -159,13 +157,13 @@ class Chat extends Component {
     return `<template data-child="${index}"></template>`;
   };
 
-  // onEvent in Explanations/ChatReducer-onEvent
   onEvent = async (state, action) => {
     if (action.type === INCOMING_DELETE_MESSAGE) {
       const messageId = action.value;
       const node = Array.from(this.refs.messages.childNodes).find(
         (el) => el.getAttribute("data-message") === messageId
       );
+
       if (node) node.remove();
     }
 
@@ -174,6 +172,7 @@ class Chat extends Component {
       const node = Array.from(this.refs.messages.childNodes).find(
         (el) => el.getAttribute("data-message") === messageId
       );
+
       if (node) node.remove();
     }
 
@@ -189,12 +188,11 @@ class Chat extends Component {
       const messageElement = this.refs.messages.querySelector(
         `[data-message="${action.value.id}"]`
       );
-      const index = state.chat.messages
-        .map((message) => message.id)
-        .indexOf(action.value.id);
+
       const newElement = new ChatListItem({
         message: action.value,
       });
+
       messageElement.parentNode.replaceChild(
         createElement(newElement),
         messageElement
@@ -207,16 +205,21 @@ class Chat extends Component {
       const messageElement = new ChatListItem({ message });
       this.refs.messages.appendChild(createElement(messageElement));
     }
+
     const scrollTypes = [ADD_MESSAGE, SCROLL_TO_BOTTOM];
+
     if (scrollTypes.includes(action.type)) {
       this.refs.text.scrollTop = this.refs.text.scrollHeight;
     }
+
     const typingTypes = [SET_TYPING_USER, RESET_TYPING_USERS];
+
     if (typingTypes.includes(action.type)) {
       const users = Object.keys(state.chat.typingUsers);
       const typingUsers = users.filter(
         (user) => !!state.chat.typingUsers[user]
-      ); /* 3 */
+      );
+
       if (typingUsers.length > 1) {
         this.refs.typing.textContent = "Several people are typing...";
       } else if (typingUsers.length === 1) {
@@ -249,7 +252,7 @@ class Chat extends Component {
               .join("")}
           </ul>
           <div data-ref="typing" class="chat__typing"></div>
-        </div> 
+        </div>
         <div class="chat__input-container">
           <template data-child="textarea"></template>
         </div>

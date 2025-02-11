@@ -6,6 +6,7 @@ const {
   setLastVisitedChannel,
   getChannels,
 } = require("../../lib/api/channelsApi");
+const { setUnreadMessages } = require("../../lib/api/usersApi");
 const {
   SetMessages,
   ResetTypingUsers,
@@ -13,6 +14,8 @@ const {
 } = require("../chat/chatActions");
 const Channel = require("../sidebar/Channel");
 const Message = require("../chat/Message");
+const User = require("../app/User");
+const { SetUser } = require("../app/appActions");
 const {
   SetSelectedChannel,
   SetChannels,
@@ -36,6 +39,9 @@ router.add("/channels/:channelId", async (params) => {
     SetMessages(messages.map((incoming) => new Message(incoming)))
   );
   store.dispatch(ScrollToBottom());
+  const incomingUser = await setUnreadMessages(channelId, 0);
+  const user = User(incomingUser);
+  store.dispatch(SetUser(user));
 });
 
 router.listen();

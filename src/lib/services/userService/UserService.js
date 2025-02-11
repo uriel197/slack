@@ -9,6 +9,25 @@ class UserService {
     this.channelService = channelService;
   }
 
+  setUnreadMessages = async (userId, channelId, unreadMessages) => {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error(`User not found: ${userId}`);
+    }
+    console.log("Before updating unreadMessages:", user.unreadMessages);
+
+    // If unreadMessages is a Map:
+    if (user.unreadMessages instanceof Map) {
+      user.unreadMessages.set(channelId, unreadMessages);
+    } else {
+      // If unreadMessages is an Object:
+      user.unreadMessages[channelId] = unreadMessages;
+    }
+    console.log("Saving user with:", user.unreadMessages);
+
+    return user.save();
+  };
+
   createUser = async (name) => {
     const user = await this.Model.find({ name }); /* 1 */
     if (user) throw new Error(`${name} is taken`);
@@ -24,6 +43,7 @@ class UserService {
     const channel = await this.channelService.getChannelByName("general");
     if (!channel) {
       const channel = await this.channelService.createChannel(
+        user.id,
         "general",
         "channel",
         [user.id] /* 3 */
